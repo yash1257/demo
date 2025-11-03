@@ -1,0 +1,40 @@
+# views:
+#   - name: today_observed_insights
+#     description: "today observed insights"
+#     public: true
+#     meta:
+#       title: today observed insights 
+#       tags:   
+#         - DPDomain.hawk device
+#         - DPUsecase.today observed insights
+#         - DPTier.Consumer Aligned
+#       metric:
+#         expression: " '*/20 * * * *'"
+#         timezone: "UTC"
+#         window: "hourly"
+#         excludes: 
+#           - hawk_device.
+#           - hawk_device.
+
+#     tables:
+#       - join_path: hawk_device
+#         prefix: true
+#         includes:
+#           -  hawk_device__observed_time,
+#           -  hawk_device__dominating_pumping_status,
+#           -  hawk_device__is_forecast,
+#           -  hawk_device__pumping_status,
+#           -  hawk_device__angular_position_maximum,
+#           -  hawk_device__angular_position_minimum,
+#           -  hawk_device__irrigation_depth_average,
+#           -  hawk_device__temperature_celsius_observed_maximum,
+#           -  hawk_device__temperature_celsius_observed_minimum,
+#           -  hawk_device__wind_direction_metric_real_average,
+#           -  hawk_device__wind_direction_imperial_real_average,
+#           -  hawk_device__wind_direction_metric_real_maximum,
+#           -  hawk_device__wind_direction_metric_real_minimum,
+#           -  hawk_device__wind_direction_imperial_real_maximum,
+#           -  hawk_device__wind_direction_imperial_real_minimum,
+#           -  hawk_device__angular_position_average
+#           -  hawk_device__record_hour_utc
+#           -  hawk_device__field_status

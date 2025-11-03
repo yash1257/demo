@@ -1,0 +1,59 @@
+name: hawk-telemetry-minerva
+version: v1alpha
+type: lens
+tags:
+  - Tier.Gold
+  - Domain.Water Management
+  - dataos:resource:lens
+description: Lens model providing structured access to Hawk device telemetry, including sensor readings, GPS data, irrigation events, weather forecasts, and device health metrics for analytics and monitoring.
+workspace: ${WORKSPACENAME}                           # Replace with your workspace name
+lens:
+  compute: ${COMPUTENAME}                             # Replace with your compute name
+  secrets:
+    - name: ${GITSECRETNAME}                          # Replace with your Bitbucket/Git secret name
+      allKeys: true
+  source:
+    type: minerva
+    name: ${CLUSTERNAME}                              # Replace with your cluster name
+    catalog: lakehouse
+  repo:  
+    url: https://bitbucket.org/tmdc/arable            # Update with your repository if different
+    lensBaseDir: arable/poc/semantic-model-minerva/hawk-device/model
+    syncFlags:  
+      - --ref=main
+  api:   # optional
+    replicas: 1 # optional
+    logLevel: info  # optional
+    envs:
+      LENS2_SCHEDULED_REFRESH_TIMEZONES: "UTC,America/Vancouver,America/Toronto"
+    resources: # optional
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 200m
+        memory: 512Mi
+  worker: # optional
+    replicas: 1 # optional
+    logLevel: info  # optional
+    envs:
+      LENS2_SCHEDULED_REFRESH_TIMEZONES: "UTC,America/Vancouver,America/Toronto"
+
+    resources: # optional
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 200m
+        memory: 512Mi
+  router: # optional
+    logLevel: info  # optional
+    envs:
+      LENS2_SCHEDULED_REFRESH_TIMEZONES: "UTC,America/Vancouver,America/Toronto"
+    resources: # optional
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 200m
+        memory: 512Mi

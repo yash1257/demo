@@ -1,0 +1,366 @@
+tables:
+  - name: hawk_sensor_health
+    sql: {{ load_sql('hawk_sensor_health') }}
+    description: Comprehensive dataset from Hawk devices featuring sensor data, GPS location details,health indicators, and irrigation performance metrics.
+    public: true
+
+
+    dimensions:
+      - name: record_seq_no
+        description: Unique record identifier.
+        type: number
+        sql: record_seq_no
+        primary_key: true
+        public: true
+
+      - name: device_serial
+        description: Unique serial number identifying each device.
+        type: number
+        sql: device_serial
+
+      - name: device_imei
+        description: Device IMEI (International Mobile Equipment Identity).
+        type: number
+        sql: device_imei
+
+      - name: device_iccid
+        description: Device ICCID (SIM card identifier).
+        type: number
+        sql: device_iccid
+
+      - name: device_prod_id
+        description: Product identifier of the device.
+        type: string
+        sql: device_prod_id
+
+      - name: device_firmware
+        description: Firmware version of the device.
+        type: number
+        sql: device_firmware
+
+      - name: device_type
+        description: Device model or type.
+        type: string
+        sql: device_type
+
+      - name: is_pivot_link
+        description: Indicates whether the device is a pivot link unit.
+        type: boolean
+        sql: is_pivot_link
+
+      - name: record_reason
+        description: Reason for the record.
+        type: string
+        sql: record_reason
+
+      - name: record_date_utc
+        description: UTC timestamp of the record.
+        type: time
+        sql: record_date_utc
+
+      - name: reason_description
+        description: Description of the reason for the record.
+        type: string
+        sql: reason_description
+
+      - name: gps_utc
+        description: GPS UTC timestamp.
+        type: time
+        sql: gps_utc
+
+      - name: gps_latitude_raw
+        description: Raw GPS latitude.
+        type: number
+        sql: gps_latitude_raw
+
+      - name: gps_longitude_raw
+        description: Raw GPS longitude.
+        type: number
+        sql: gps_longitude_raw
+
+      - name: gps_altitude_meters
+        description: GPS altitude in meters.
+        type: number
+        sql: gps_altitude_meters
+
+      - name: gps_status_raw
+        description: Raw GPS status.
+        type: string
+        sql: gps_status_raw
+
+      - name: gps_latitude_degrees
+        description: GPS latitude in decimal degrees.
+        type: number
+        sql: gps_latitude_degrees
+
+      - name: gps_longitude_degrees
+        description: GPS longitude in decimal degrees.
+        type: number
+        sql: gps_longitude_degrees
+
+      - name: gps_speed_kmh
+        description: GPS speed in km/h.
+        type: number
+        sql: gps_speed_kmh
+
+      - name: gps_fix_ok
+        description: Whether GPS fix is OK.
+        type: boolean
+        sql: gps_fix_ok
+
+      - name: gps_3d_fix
+        description: Indicates a 3D GPS fix.
+        type: boolean
+        sql: gps_3d_fix
+
+      - name: gps_last_fix_failed
+        description: Indicates if the last GPS fix failed.
+        type: boolean
+        sql: gps_last_fix_failed
+
+      - name: device_status_raw
+        description: Raw device status.
+        type: string
+        sql: device_status_raw
+
+      - name: device_connected_to_gsm
+        description: Whether device is connected to GSM.
+        type: boolean
+        sql: device_connected_to_gsm
+
+      - name: device_shunting_power
+        description: Device shunting power.
+        type: number
+        sql: device_shunting_power
+
+      - name: analogue_field_type
+        description: Type of analogue field.
+        type: string
+        sql: analogue_field_type
+
+      - name: hawk_lite_battery_voltage_mv
+        description: Hawk Lite battery voltage in millivolts.
+        type: number
+        sql: hawk_lite_battery_voltage_mv
+
+      - name: hawk_lite_battery_voltage_v
+        description: Hawk Lite battery voltage in volts.
+        type: number
+        sql: hawk_lite_battery_voltage_v
+
+      - name: hawk_pro_battery_voltage_v
+        description: Hawk Pro battery voltage in volts.
+        type: number
+        sql: hawk_pro_battery_voltage_v
+
+      - name: device_temperature_c
+        description: Device temperature in Celsius.
+        type: number
+        sql: device_temperature_c
+
+      - name: signal_strength_raw
+        description: Raw signal strength.
+        type: number
+        sql: signal_strength_raw
+
+      - name: signal_strength_dbm
+        description: Signal strength in dBm.
+        type: number
+        sql: signal_strength_dbm
+
+      - name: rain_link_counter
+        description: Rain link counter.
+        type: number
+        sql: rain_link_counter
+
+      - name: rain_link_mm
+        description: Rain measured by the link in millimeters.
+        type: number
+        sql: rain_link_mm
+
+      - name: pressure_mv
+        description: Pressure in millivolts.
+        type: number
+        sql: pressure_mv
+
+      - name: pressure_v
+        description: Pressure in volts.
+        type: number
+        sql: pressure_v
+
+      - name: pressure_psi
+        description: Pressure in PSI.
+        type: number
+        sql: pressure_psi
+
+      - name: pressure_kpa
+        description: Pressure in kilopascals (kPa).
+        type: number
+        sql: pressure_kpa
+
+      - name: is_baseline
+        description: Indicates baseline condition.
+        type: boolean
+        sql: is_baseline
+
+      - name: is_low_pressure_irrigation
+        description: Indicates low-pressure irrigation.
+        type: boolean
+        sql: is_low_pressure_irrigation
+
+      - name: is_standard_irrigation
+        description: Indicates standard irrigation.
+        type: boolean
+        sql: is_standard_irrigation
+
+      - name: is_irrigation_threshold
+        description: Indicates irrigation threshold.
+        type: boolean
+        sql: is_irrigation_threshold
+
+      - name: is_sensor_disconnect
+        description: Indicates sensor disconnect.
+        type: boolean
+        sql: is_sensor_disconnect
+
+      - name: is_high_limit
+        description: Indicates high limit condition.
+        type: boolean
+        sql: is_high_limit
+
+      - name: pressure_category
+        description: Pressure category.
+        type: string
+        sql: pressure_category
+
+      - name: created_at
+        description: Record creation timestamp.
+        type: time
+        sql: created_at
+
+      - name: updated_at
+        description: Record update timestamp.
+        type: time
+        sql: updated_at
+
+      - name: health_status_6hr_window
+        description: Device health status over the last 6-hour window.
+        type: string
+        sql: health_status_6hr_window
+
+    measures:
+
+      - name: total_record_seq_no
+        sql: "{TABLE.record_seq_no}"
+        type: count_distinct
+        description: Total number of record sequences.
+
+      - name: pressure_psi_min
+        sql: MIN({TABLE.pressure_psi})
+        type: number
+        description: Minimum pressure in PSI.
+
+      - name: pressure_psi_max
+        sql: MAX({TABLE.pressure_psi})
+        type: number
+        description: Maximum pressure in PSI.
+
+      - name: max_record_date_utc
+        sql: MAX({TABLE.record_date_utc})
+        type: number
+        description: Maximum record date in UTC.
+
+      - name: min_record_date_utc
+        sql: MIN({TABLE.record_date_utc})
+        type: number
+        description: Maximum record date in UTC.
+
+      # - name: pressure_kpa_avg
+      #   sql: AVG({TABLE.pressure_kpa})
+      #   type: number
+      #   description: Average pressure in kilopascals (kPa).
+
+      # - name: pressure_kpa_min
+      #   sql: MIN({TABLE.pressure_kpa})
+      #   type: number
+      #   description: Minimum pressure in kilopascals (kPa).
+
+      # - name: pressure_kpa_max
+      #   sql: MAX({TABLE.pressure_kpa})
+      #   type: number
+      #   description: Maximum pressure in kilopascals (kPa).
+
+      # - name: device_temperature_avg
+      #   sql: AVG({TABLE.device_temperature_c})
+      #   type: number
+      #   description: Average device temperature in °C.
+
+      # - name: device_temperature_min
+      #   sql: MIN({TABLE.device_temperature_c})
+      #   type: number
+      #   description: Minimum device temperature in °C.
+
+      # - name: device_temperature_max
+      #   sql: MAX({TABLE.device_temperature_c})
+      #   type: number
+      #   description: Maximum device temperature in °C.
+
+      # - name: rain_link_mm_sum
+      #   sql: SUM({TABLE.rain_link_mm})
+      #   type: number
+      #   description: Total rain measured by the link in millimeters.
+
+      # - name: rain_link_mm_min
+      #   sql: MIN({TABLE.rain_link_mm})
+      #   type: number
+      #   description: Minimum rain measured by the link in millimeters.
+
+      # - name: rain_link_mm_max
+      #   sql: MAX({TABLE.rain_link_mm})
+      #   type: number
+      #   description: Maximum rain measured by the link in millimeters.
+
+      # - name: signal_strength_dbm_avg
+      #   sql: AVG({TABLE.signal_strength_dbm})
+      #   type: number
+      #   description: Average signal strength in dBm.
+
+      # - name: signal_strength_dbm_min
+      #   sql: MIN({TABLE.signal_strength_dbm})
+      #   type: number
+      #   description: Minimum signal strength in dBm.
+
+      # - name: signal_strength_dbm_max
+      #   sql: MAX({TABLE.signal_strength_dbm})
+      #   type: number
+      #   description: Maximum signal strength in dBm.
+
+      # - name: hawk_lite_battery_voltage_avg
+      #   sql: AVG({TABLE.hawk_lite_battery_voltage_v})
+      #   type: number
+      #   description: Average Hawk Lite battery voltage (V).
+
+      # - name: hawk_lite_battery_voltage_min
+      #   sql: MIN({TABLE.hawk_lite_battery_voltage_v})
+      #   type: number
+      #   description: Minimum Hawk Lite battery voltage (V).
+
+      # - name: hawk_lite_battery_voltage_max
+      #   sql: MAX({TABLE.hawk_lite_battery_voltage_v})
+      #   type: number
+      #   description: Maximum Hawk Lite battery voltage (V).
+
+      # - name: hawk_pro_battery_voltage_avg
+      #   sql: AVG({TABLE.hawk_pro_battery_voltage_v})
+      #   type: number
+      #   description: Average Hawk Pro battery voltage (V).
+
+      # - name: hawk_pro_battery_voltage_min
+      #   sql: MIN({TABLE.hawk_pro_battery_voltage_v})
+      #   type: number
+      #   description: Minimum Hawk Pro battery voltage (V).
+
+      # - name: hawk_pro_battery_voltage_max
+      #   sql: MAX({TABLE.hawk_pro_battery_voltage_v})
+      #   type: number
+      #   description: Maximum Hawk Pro battery voltage (V).

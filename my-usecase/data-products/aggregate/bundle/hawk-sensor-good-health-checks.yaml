@@ -1,0 +1,181 @@
+name: hawk-sensor-good-health-quality
+version: v1
+type: workflow
+tags:
+  - Tier.Silver
+  - Domain.Water Management
+  - data-quality
+  - hawk-sensor-good-health
+description: Data quality workflow for the HAWK sensor good health dataset. This
+  enforces completeness, validity, freshness, schema consistency and a set of
+  checks appropriate for the sensor-good-health table.
+workspace: ${WORKSPACENAME}            # Replace with your workspace name
+workflow:
+  # schedule:
+  #   cron: '*/20 * * * *'               # Runs every 20 minutes modify for frequency
+  #   concurrencyPolicy: Forbid
+  dag:
+    - name: hawk-sensor-good-health-dag
+      title: HAWK sensor good health Data Quality Assertions
+      description: Apply data quality rules on the hawk_sensor_good_health dataset
+        to validate completeness, accuracy, freshness and schema adherence.
+      spec:
+        stack: soda+python:2.0
+        logLevel: INFO
+        compute: ${COMPUTENAME}        # Replace with your compute resource name
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 100m
+            memory: 256Mi
+        stackSpec:
+          inputs:
+            - dataset: dataos://lakehouse:hawk_data/hawk_sensor_good_health?acl=rw     # Modify dataset path if using a different table
+              options:
+                engine: minerva
+                clusterName: ${CLUSTERNAME}            # Replace with your cluster name
+              filter: 
+                name: hawk_sensor_good_health
+                where: load_datetime >= date_trunc('minute', current_timestamp)
+                  AND load_datetime < date_trunc('minute', current_timestamp) + INTERVAL '20' MINUTE   
+
+              checks:
+                # COMPLETENESS (important identifiers and timestamps)
+                - missing_count(id) = 0:
+                    name: Completeness of id
+                    attributes:
+                      category: Completeness
+
+
+                # UNIQUENESS
+                - duplicate_count(id) = 0:
+                    name: Uniqueness of id
+                    attributes:
+                      category: Uniqueness
+
+                # VALIDITY / RANGES
+                - invalid_count(gps_latitude_degrees) = 0:
+                    valid min: -90
+                    valid max: 90
+                    name: Validity of GPS Latitude (degrees)
+                    attributes:
+                      category: Validity
+                - invalid_count(gps_longitude_degrees) = 0:
+                    valid min: -180
+                    valid max: 180
+                    name: Validity of GPS Longitude (degrees)
+                    attributes:
+                      category: Validity
+
+
+
+                # BOOLEAN / FLAG FIELDS (treat missing or non-boolean as invalid_count)
+                - is_pivot_link_boolean_valid = 0:
+                    query: |
+                      SELECT COUNT(*) AS is_pivot_link_boolean_valid
+                      FROM hawk_sensor_good_health
+                      WHERE is_pivot_link IS NOT NULL
+                        AND is_pivot_link NOT IN (TRUE, FALSE)
+                    name: is_pivot_link should be boolean (TRUE/FALSE)
+                    attributes:
+                      category: Validity
+
+                # FRESHNESS
+                - freshness(created_at) < 1d:
+                    name: Freshness of Record Creation Time
+                    attributes:
+                      category: Freshness
+
+                # SCHEMA: warn for optional columns, fail for critical ones
+                - schema:
+                    name: Required Columns Present (hawk_sensor_good_health)
+                    warn:
+                      when required column missing:
+                        - device_iccid
+                        - device_prod_id
+                        - device_firmware
+                        - gps_utc
+                        - gps_latitude_raw
+                        - gps_longitude_raw
+                        - gps_altitude_meters
+                        - gps_speed_cms
+                        - gps_speed_accuracy_cms_per_10
+                        - gps_heading_raw
+                        - gps_pdop_x10
+                        - gps_position_accuracy_meters
+                        - gps_status_raw
+                        - gps_speed_kmh
+                        - gps_heading_degrees
+                        - gps_pdop_value
+                        - gps_fix_ok
+                        - gps_3d_fix
+                        - gps_last_fix_failed
+                        - digital_inputs_raw
+                        - digital_outputs_raw
+                        - device_status_raw
+                        - digital_input_0_ignition
+                        - device_in_trip
+                        - device_vbatt_good
+                        - device_vext_good
+                        - device_connected_to_gsm
+                        - device_shunting_power
+                        - device_vext_enabled
+                        - device_tamper_alert
+                        - analogue_field_type
+                        - hawk_lite_battery_voltage_mv
+                        - hawk_lite_battery_voltage_v
+                        - hawk_pro_battery_voltage_v
+                        - device_temperature_c
+                        - signal_strength_raw
+                        - signal_strength_dbm
+                        - rain_link_counter
+                        - rain_link_mm
+                        - pressure_mv
+                        - pressure_v
+                        - pressure_psi
+                        - pressure_kpa
+                        - is_baseline
+                        - is_low_pressure_irrigation
+                        - is_standard_irrigation
+                        - is_irrigation_threshold
+                        - is_sensor_disconnect
+                        - is_high_limit
+                        - pressure_category
+                        - updated_at
+                        - health_status_6hr_window
+                    fail:
+                      when required column missing:
+                        - id
+                        - device_serial
+                        - device_imei
+                        - record_seq_no
+                        - record_date_utc
+                        - created_at
+                    attributes:
+                      category: Schema
+
+              profile:
+                # Select a compact set of columns for profiling
+                columns:
+                  - id
+                  - device_serial
+                  - device_imei
+                  - device_prod_id
+                  - hawk_lite_battery_voltage_v
+                  - hawk_lite_battery_voltage_mv
+                  - hawk_pro_battery_voltage_v
+                  - device_temperature_c
+                  - signal_strength_dbm
+                  - signal_strength_raw
+                  - gps_latitude_degrees
+                  - gps_longitude_degrees
+                  - gps_altitude_meters
+                  - gps_speed_kmh
+                  - gps_heading_degrees
+                  - rain_link_mm
+                  - rain_link_counter
+                  - pressure_psi
+                  - pressure_kpa
+                  - health_status_6hr_window

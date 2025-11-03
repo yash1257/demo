@@ -1,0 +1,42 @@
+name: weather-realtime
+version: v1beta
+entity: product
+type: data
+purpose: To provide a centralized, real-time weather data product that consolidates ingestion, processing, and management of current weather conditions in both imperial and metric units. It delivers timely, accurate information to support operational decision-making, alerts, and real-time analytics across business functions.
+tags:   
+  - DPDomain.Water Management  
+  - DPUsecase.Hawk IoT Device
+  - DPTier.Source Aligned
+description: This data product centralizes the ingestion, processing, and delivery of real-time weather data in both imperial and metric units. It ensures timely, accurate, and continuous availability of live weather information to support operational monitoring, real-time analytics, and data-driven decision-making across business functions. The product is designed for seamless integration with analytics platforms, enabling actionable insights and enhanced forecasting and operational efficiency.
+
+refs:
+  - title: 'Realtime Weather API Reference'
+    href: https://docs.tomorrow.io/reference/realtime-weather      # Reference documentation links for discoverability
+    
+v1beta:
+  data:
+    meta:
+      title: Real-Time Weather                # Display name for the product
+      sourceCodeUrl: https://bitbucket.org/tmdc/arable/src/main/poc/data-products/source-aligned-dp/realtime-weather-dp           # Update this to your actual repo path if structure changes
+    collaborators:
+      - name: yashrathore               # Roles & contributors
+        description: collaborator
+      - name: manishagrawal
+        description: owner
+      - name: yogendraraghuvanshi
+        description: developer
+    resource:
+      description: A Bundle orchestrates and streamlines data ingestion, quality validation, and processing, ensuring an efficient, reliable, and consistent flow of data across the platform.
+      purpose: ingestion
+      refType: dataos
+      ref: bundle:v1beta:weather-realtime-bundle           # Change 'weather-realtime-bundle' if you have a different bundle name
+    inputs:                                                # Input datasets consumed by this product
+      - description: Real-time weather data in metric units (temperature in Celsius, wind speed in km/h, etc.).
+        purpose: Collect and store metric unit real-time data.
+        refType: dataos
+        ref: dataos://lakehouse:weather/realtime_metric      # Update path if metric dataset name or structure changes
+
+      - description: Real-time weather data in imperial units (temperature in Fahrenheit, wind speed in mph, etc.).
+        purpose: Collect and store imperial unit real-time data.
+        refType: dataos
+        ref: dataos://lakehouse:weather/realtime_imperial     # Update path if imperial dataset name or structure changes

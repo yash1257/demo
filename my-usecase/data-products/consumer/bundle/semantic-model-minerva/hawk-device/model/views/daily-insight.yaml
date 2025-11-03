@@ -1,0 +1,28 @@
+
+views:
+   - name: daily_insights
+     description: Provides daily insights from the Hawk device
+     public: true
+     tables:
+       - join_path: hawk_device
+         prefix: true
+         includes:
+           -  observed_time
+           -  dominating_pumping_status
+           -  is_forecast
+           -  pumping_status
+           -  angular_position_maximum
+           -  angular_position_minimum
+           -  irrigation_depth_average
+           -  temp_c_obs_maximum
+           -  temp_c_obs_minimum
+           -  wind_direction_metric_real_average
+           -  wind_direction_imperial_real_average
+           -  wind_direction_metric_real_maximum
+           -  wind_direction_metric_real_minimum
+           -  wind_direction_imperial_real_maximum
+           -  wind_direction_imperial_real_minimum
+           -  angular_position_average
+           -  record_hour_utc
+           -  field_status
+           -  today

@@ -1,0 +1,182 @@
+name: weather-realtime-metric-quality
+version: v1
+type: workflow
+tags:
+  - Tier.Silver
+  - Domain.Water Management
+description: >
+  Data quality checks for realtime weather dataset (metric units).
+  Ensures completeness, validity, accuracy, freshness, and schema consistency
+  of meteorological attributes.
+workspace: ${WORKSPACENAME}                # Replace with your DataOS workspace name
+workflow:
+  # schedule:
+  #   cron: '*/60 * * * *'                  #  Runs every 60 minutes (modify for frequency)
+  #   concurrencyPolicy: Forbid
+  dag:
+    - name: realtime-metric-quality
+      title: Realtime Weather Metric Data Quality Assertions
+      description: >
+        Validate completeness, validity, accuracy, schema, and consistency of
+        realtime_metric dataset using physical plausibility rules.
+      spec:
+        stack: soda+python:2.0
+        logLevel: INFO
+        compute: ${COMPUTENAME}         # Replace with your compute resource name
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 100m
+            memory: 256Mi
+        stackSpec:
+          inputs:
+            - dataset: dataos://lakehouse:nilus/realtime_metric?acl=rw         # Modify dataset path if using a different table
+              options:
+                engine: minerva
+                clusterName: ${CLUSTERNAME}              # Replace with your cluster name
+              filter: 
+                name: realtime_metric                 # Filters data for the current hour window — change if your data frequency differs
+                where: load_datetime >= date_trunc('hour', current_timestamp)
+                  AND load_datetime < date_trunc('hour', current_timestamp) + INTERVAL '1' HOUR    
+              checks:
+                # COMPLETENESS
+                
+                - missing_count(pressure_sea_level) = 0:
+                    name: Completeness of pressure sea level
+                    attributes:
+                      category: Completeness
+
+                - missing_count(humidity) = 0:
+                    name: Completeness of Humidity
+                    attributes:
+                      category: Completeness
+
+                - missing_count(wind_direction) = 0:
+                    name: Completeness of Precipitation Probability
+                    attributes:
+                      category: Completeness
+
+                - missing_count(time) = 0:
+                    name: Completeness of Time Column
+                    attributes:
+                      category: Completeness
+                
+                # VALIDITY (Metric Units)
+                - invalid_count(temperature) = 0:
+                    valid min: -60
+                    valid max: 110
+                    name: Validity of Temperature (°F)
+                    attributes:
+                      category: Validity
+                                      
+                - invalid_count(humidity) = 0:
+                    valid min: 0
+                    valid max: 100
+                    name: Validity of Humidity (%)
+                    attributes:
+                      category: Validity
+
+                - invalid_count(wind_speed) = 0:
+                    valid min: 0
+                    valid max: 200
+                    name: Validity of Wind Speed (m/s)
+                    attributes:
+                      category: Validity
+
+                - invalid_count(rain_intensity) = 0:
+                    valid min: 0
+                    valid max: 500
+                    name: Validity of Rain Intensity (mm/h)
+                    attributes:
+                      category: Validity
+
+                - invalid_count(freezing_rain_intensity) = 0:
+                    valid min: 0
+                    valid max: 50
+                    name: Validity of Freezing Rain Intensity (mm/h)
+                    attributes:
+                      category: Validity
+
+                # ACCURACY 
+
+                - invalid_count(precipitation_probability) = 0:
+                    valid min: 0
+                    valid max: 100
+                    name: Accuracy of Precipitation Probability (%)
+                    attributes:
+                      category: Accuracy
+
+                - invalid_count(cloud_cover) = 0:
+                    valid min: 0
+                    valid max: 100
+                    name: Accuracy of Cloud Cover (%)
+                    attributes:
+                      category: Accuracy
+
+                - invalid_count(uv_index) = 0:
+                    valid min: 0
+                    valid max: 20
+                    name: Accuracy of UV Index
+                    attributes:
+                      category: Accuracy
+
+                - invalid_count(visibility) = 0:
+                    valid min: 0
+                    name: Accuracy of Visibility (>= 0)
+                    attributes:
+                      category: Accuracy
+
+                - wind_consistency_check:
+                    query: |
+                      SELECT COUNT(*) AS invalid_records
+                      FROM realtime_metric
+                      WHERE wind_direction < 0 OR wind_direction > 360
+                        OR (wind_gust IS NOT NULL AND wind_speed IS NOT NULL AND wind_gust < wind_speed)
+                    name: Wind direction and gust consistency
+                    attributes:
+                      category: Accuracy
+
+                - dewpoint_vs_temp_check:
+                    query: |
+                      SELECT COUNT(*) AS invalid_records
+                      FROM realtime_metric
+                      WHERE dew_point IS NOT NULL AND temperature IS NOT NULL
+                        AND dew_point > temperature
+                    name: Dew point should not exceed temperature
+                    attributes:
+                      category: Accuracy
+
+                # FRESHNESS
+                
+                - freshness(load_datetime) < 1h:
+                    name: Realtime Load Freshness (< 1 hour)
+                    attributes:
+                      category: Freshness
+
+                
+                # SCHEMA
+                - schema:
+                    name: Confirm required weather columns are present
+                    warn:
+                      when required column missing: [humidity, wind_speed, rain_intensity]
+                    fail:
+                      when required column missing:
+                        - latitude
+                        - longitude
+                        - time
+                        - temperature
+                        - wind_gust
+                        - wind_direction
+                    attributes:
+                      category: Schema
+              profile:
+                columns:
+                  - "humidity"
+                  - "rain_intensity"
+                  - "temperature"
+                  - "wind_speed" 
+                  - "wind_gust"
+                  - "wind_direction"  
+                  - "pressure_sea_level"

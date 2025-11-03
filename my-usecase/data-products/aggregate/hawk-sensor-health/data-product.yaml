@@ -1,0 +1,58 @@
+name: hawk-sensor-device-health
+version: v1beta
+entity: product
+type: data
+purpose: To deliver a centralized, enriched dataset that provides end-to-end insights into Hawk device performance and reliability, enabling proactive monitoring, anomaly detection, and optimized irrigation operations across business functions.
+tags:   
+  - DPDomain.Water Management  
+  - DPUsecase.Hawk IoT Device
+  - DPTier.Consumer Aligned
+description: This data product aggregates and analyzes data from Hawk devices, including sensor readings, pressure, temperature, and system diagnostics, providing a unified view of device performance. It delivers reliable, actionable insights to support operational decision-making, predictive maintenance, and overall device management. The product is designed for seamless integration with analytics platforms, enabling enhanced monitoring and informed business outcomes
+refs:
+  - title: 'DataOS Info'
+    href:  https://dataos.info/                # Reference documentation links for discoverability
+    
+v1beta:
+  data:
+    meta:
+      title: Reliable Pressure Sensor Insights            # Display name for the product
+      sourceCodeUrl: https://bitbucket.org/tmdc/arable/src/main/poc/data-products/consumer-aligned-dp/hawk-sensor-health    # Update this to your actual repo path if structure changes 
+   
+    collaborators:              # Roles & contributors
+      - name: yashrathore
+        description: collaborator
+      - name: manishagrawal
+        description: owner
+      - name: yogendraraghuvanshi
+        description: developer
+
+    resource:
+      description: A Bundle orchestrates and streamlines data ingestion, quality validation, and processing, ensuring an efficient, reliable, and consistent flow of data across the platform.
+      purpose: Efficient and reliable data flow.
+      refType: dataos
+      ref: bundle:v1beta:hawk-sensor-health-bundle          # Change 'hawk-sensor-health-bundle' if you have a different bundle name
+                                                  # Input datasets consumed by this product
+
+    inputs:
+      - description: Raw telemetry and health data from Hawk devices.
+        purpose: Standardized input for analysis and reporting.
+        refType: dataos
+        ref: dataset:lakehouse:hawk:hawk_sensor_good_health
+
+    ports:
+      lens:
+        ref: lens:v1alpha:hawk-sensor-health:arable            # put your semantic model name here
+        refType: dataos
+
+      rest:
+        - url: https://dataos-training.mydataos.com/lens2/api/arable:hawk-sensor-health/v2/rest       # put your semantic model name in the link
+          meta:
+            foo: bar
+
+      postgres:
+        - host: tcp.dataos-training.mydataos.com              # your DataOS environment 
+          port: 5432
+          params:
+            ssl: true
+          meta:
+            foo: bar

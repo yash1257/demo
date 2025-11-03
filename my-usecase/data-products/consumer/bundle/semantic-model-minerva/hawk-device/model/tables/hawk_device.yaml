@@ -1,0 +1,1173 @@
+tables:
+  - name: hawk_device
+    sql: {{ load_sql('hawk_device') }}
+    description: Unified telemetry data source aggregating sensor measurements, irrigation activity, weather forecasts, and device performance metrics from Hawk devices.
+    data_source: lakehouse
+    public: true
+
+    dimensions:
+      - name: device_serial
+        description: Serial number identifying device.
+        type: number
+        sql: device_serial
+        primary_key: true
+        public: true
+
+      - name: device_imei
+        description: Device IMEI (International Mobile Equipment Identity).
+        type: number
+        sql: device_imei
+
+      - name: device_iccid
+        description: SIM card ICCID (Integrated Circuit Card Identifier).
+        type: number
+        sql: device_iccid
+
+      - name: device_type
+        description: Model or type of the device.
+        type: string
+        sql: device_type
+
+      - name: is_pivot_link
+        description: Indicates whether the device is a pivot link unit.
+        type: boolean
+        sql: is_pivot_link
+
+      - name: health_status_6hr_window
+        description: Device health status over the last 6-hour window.
+        type: string
+        sql: health_status_6hr_window
+
+      - name: gps_latitude_degrees
+        description: Device GPS latitude in decimal degrees.
+        type: number
+        sql: gps_latitude_degrees
+
+      - name: gps_longitude_degrees
+        description: Device GPS longitude in decimal degrees.
+        type: number
+        sql: gps_longitude_degrees
+
+      - name: gps_altitude_meters
+        description: Device GPS altitude in meters.
+        type: number
+        sql: gps_altitude_meters
+
+      - name: record_hour_utc
+        description: Timestamp (UTC) rounded to the nearest hour when the record was created.
+        type: time
+        sql: record_hour_utc
+
+      - name: irrigation_event_type
+        description: Type of irrigation event recorded (e.g., start, stop, duration).
+        type: string
+        sql: irrigation_event_type
+
+      - name: pumping_status
+        description: Real-time pump status indicator.
+        type: number
+        sql: pumping_status
+
+      - name: dominating_pumping_status
+        description: Most frequent pump status during the aggregation window.
+        type: number
+        sql: dominating_pumping_status
+
+      - name: observed_time
+        description: Actual timestamp of the device observation.
+        type: time
+        sql: observed_time
+
+      - name: field_status
+        description: Operational or environmental status of the field.
+        type: string
+        sql: field_status
+
+      - name: device_health_status
+        description: Overall computed health status of the device.
+        type: string
+        sql: device_health_status
+
+      - name: is_forecast
+        description: Indicates whether the record represents forecasted (1) or observed (0) data.
+        type: number
+        sql: is_forecast
+
+      - name: data_quality_score
+        description: Quality score of the data (ranging from 0–1 or 0–100 depending on source).
+        type: number
+        sql: data_quality_score
+
+      - name: rain_avg
+        description: rain average value.
+        type: number
+        sql: rain_avg
+        public: false 
+
+      - name: rain_max
+        description: rain average value.
+        type: number
+        sql: rain_max
+        public: false 
+
+      - name: rain_min
+        description: rain average value.
+        type: number
+        sql: rain_min        
+        public: false 
+
+      - name: irrigation_depth_avg
+        description: Raw irrigation depth value.
+        type: number
+        sql: irrigation_depth_avg
+        public: false 
+        
+      - name: irrigation_depth_max
+        description: Raw maximum irrigation depth value.
+        type: number
+        sql: irrigation_depth_max
+        public: false 
+
+      - name: irrigation_depth_min
+        description: Raw minimum irrigation depth value.
+        type: number
+        sql: irrigation_depth_min
+        public: false 
+
+      - name: angular_position_avg
+        description: Raw angular position average.
+        type: number
+        sql: angular_position_avg
+        public: false 
+
+      - name: angular_position_max
+        description: Raw angular position maximum.
+        type: number
+        sql: angular_position_max
+        public: false 
+
+      - name: angular_position_min
+        description: Raw angular position minimum.
+        type: number
+        sql: angular_position_min
+        public: false 
+
+      - name: pressure_psi_avg
+        description: Raw average pressure in PSI.
+        type: number
+        sql: pressure_psi_avg
+        public: false 
+
+      - name: pressure_psi_max
+        description: Raw maximum pressure in PSI.
+        type: number
+        sql: pressure_psi_max
+        public: false 
+
+      - name: pressure_psi_min
+        description: Raw minimum pressure in PSI.
+        type: number
+        sql: pressure_psi_min
+        public: false 
+
+      - name: pressure_kpa_avg
+        description: Raw average pressure in kilopascals.
+        type: number
+        sql: pressure_kpa_avg
+        public: false 
+
+      - name: pressure_kpa_max
+        description: Raw maximum pressure in kilopascals.
+        type: number
+        sql: pressure_kpa_max
+        public: false 
+
+      - name: pressure_kpa_min
+        description: Raw minimum pressure in kilopascals.
+        type: number
+        sql: pressure_kpa_min
+        public: false 
+
+      - name: temp_c_obs_avg
+        description: Raw average observed temperature in °C.
+        type: number
+        sql: temp_c_obs_avg
+        public: false 
+
+      - name: temp_c_obs_min
+        description: Raw minimum observed temperature in °C.
+        type: number
+        sql: temp_c_obs_min
+        public: false 
+
+      - name: temp_c_obs_max
+        description: Raw maximum observed temperature in °C.
+        type: number
+        sql: temp_c_obs_max
+        public: false 
+
+      - name: temp_f_obs_avg
+        description: Raw average observed temperature in °F.
+        type: number
+        sql: temp_f_obs_avg
+        public: false 
+
+      - name: temp_f_obs_min
+        description: Raw minimum observed temperature in °F.
+        type: number
+        sql: temp_f_obs_min
+        public: false 
+
+      - name: temp_f_obs_max
+        description: Raw maximum observed temperature in °F.
+        type: number
+        sql: temp_f_obs_max
+        public: false 
+
+      - name: temp_c_hist_avg
+        description: Raw historical average temperature in °C.
+        type: number
+        sql: temp_c_hist_avg
+        public: false 
+
+      - name: temp_c_hist_min
+        description: Raw historical minimum temperature in °C.
+        type: number
+        sql: temp_c_hist_min
+        public: false 
+
+      - name: temp_c_hist_max
+        description: Raw historical maximum temperature in °C.
+        type: number
+        sql: temp_c_hist_max
+        public: false 
+
+      - name: temp_f_hist_avg
+        description: Raw historical average temperature in °F.
+        type: number
+        sql: temp_f_hist_avg
+        public: false 
+
+      - name: temp_f_hist_min
+        description: Raw historical minimum temperature in °F.
+        type: number
+        sql: temp_f_hist_min
+        public: false 
+
+      - name: temp_f_hist_max
+        description: Raw historical maximum temperature in °F.
+        type: number
+        sql: temp_f_hist_max
+        public: false  
+
+      - name: wind_obs_metric_avg
+        description: Raw observed average wind speed (metric units).
+        type: number
+        sql: wind_obs_metric_avg
+        public: false  
+
+      - name: wind_obs_metric_min
+        description: Raw observed minimum wind speed (metric units).
+        type: number
+        sql: wind_obs_metric_min
+        public: false  
+
+      - name: wind_obs_metric_max
+        description: Raw observed maximum wind speed (metric units).
+        type: number
+        sql: wind_obs_metric_max
+        public: false  
+
+      - name: wind_obs_imperial_avg
+        description: Raw observed average wind speed (imperial units).
+        type: number
+        sql: wind_obs_imperial_avg
+        public: false  
+
+      - name: wind_obs_imperial_min
+        description: Raw observed minimum wind speed (imperial units).
+        type: number
+        sql: wind_obs_imperial_min
+        public: false  
+
+      - name: wind_obs_imperial_max
+        description: Raw observed maximum wind speed (imperial units).
+        type: number
+        sql: wind_obs_imperial_max
+        public: false  
+
+      - name: wind_hist_metric_avg
+        description: Raw historical average wind speed (metric units).
+        type: number
+        sql: wind_hist_metric_avg
+        public: false  
+
+      - name: wind_hist_metric_min
+        description: Raw historical minimum wind speed (metric units).
+        type: number
+        sql: wind_hist_metric_min
+        public: false  
+
+      - name: wind_hist_metric_max
+        description: Raw historical maximum wind speed (metric units).
+        type: number
+        sql: wind_hist_metric_max
+        public: false  
+
+      - name: wind_hist_imperial_avg
+        description: Raw historical average wind speed (imperial units).
+        type: number
+        sql: wind_hist_imperial_avg
+        public: false  
+
+      - name: wind_hist_imperial_min
+        description: Raw historical minimum wind speed (imperial units).
+        type: number
+        sql: wind_hist_imperial_min
+        public: false  
+
+      - name: wind_hist_imperial_max
+        description: Raw historical maximum wind speed (imperial units).
+        type: number
+        sql: wind_hist_imperial_max
+        public: false  
+
+      - name: wind_direction_imperial_hist_avg
+        description: Raw historical average wind direction (imperial units).
+        type: number
+        sql: wind_direction_imperial_hist_avg
+        public: false  
+
+      - name: wind_direction_metric_hist_avg
+        description: Raw historical average wind direction (metric units).
+        type: number
+        sql: wind_direction_metric_hist_avg
+        public: false  
+
+      - name: wind_direction_imperial_real_avg
+        description: Raw real-time average wind direction (imperial units).
+        type: number
+        sql: wind_direction_imperial_real_avg
+        public: false  
+
+      - name: wind_direction_metric_real_avg
+        description: Raw real-time average wind direction (metric units).
+        type: number
+        sql: wind_direction_metric_real_avg
+        public: false  
+
+      - name: wind_direction_imperial_hist_max
+        description: Raw historical maximum wind direction (imperial units).
+        type: number
+        sql: wind_direction_imperial_hist_max
+        public: false  
+
+      - name: wind_direction_metric_hist_max
+        description: Raw historical maximum wind direction (metric units).
+        type: number
+        sql: wind_direction_metric_hist_max
+        public: false  
+
+      - name: wind_direction_imperial_real_max
+        description: Raw real-time maximum wind direction (imperial units).
+        type: number
+        sql: wind_direction_imperial_real_max
+        public: false  
+
+      - name: wind_direction_metric_real_max
+        description: Raw real-time maximum wind direction (metric units).
+        type: number
+        sql: wind_direction_metric_real_max
+        public: false  
+
+      - name: wind_direction_imperial_hist_min
+        description: Raw historical minimum wind direction (imperial units).
+        type: number
+        sql: wind_direction_imperial_hist_min
+        public: false  
+
+      - name: wind_direction_metric_hist_min
+        description: Raw historical minimum wind direction (metric units).
+        type: number
+        sql: wind_direction_metric_hist_min
+        public: false  
+
+      - name: wind_direction_imperial_real_min
+        description: Raw real-time minimum wind direction (imperial units).
+        type: number
+        sql: wind_direction_imperial_real_min
+        public: false  
+
+      - name: wind_direction_metric_real_min
+        description: Raw real-time minimum wind direction (metric units).
+        type: number
+        sql: wind_direction_metric_real_min
+        public: false  
+
+      - name: temp_c_fcst_avg
+        description: Raw forecasted average temperature (°C).
+        type: number
+        sql: temp_c_fcst_avg
+        public: false  
+
+      - name: temp_c_fcst_min
+        description: Raw forecasted minimum temperature (°C).
+        type: number
+        sql: temp_c_fcst_min
+        public: false  
+
+      - name: temp_c_fcst_max
+        description: Raw forecasted maximum temperature (°C).
+        type: number
+        sql: temp_c_fcst_max
+        public: false  
+
+      - name: temp_f_fcst_avg
+        description: Raw forecasted average temperature (°F).
+        type: number
+        sql: temp_f_fcst_avg
+        public: false  
+
+      - name: temp_f_fcst_min
+        description: Raw forecasted minimum temperature (°F).
+        type: number
+        sql: temp_f_fcst_min
+        public: false  
+
+      - name: temp_f_fcst_max
+        description: Raw forecasted maximum temperature (°F).
+        type: number
+        sql: temp_f_fcst_max
+        public: false  
+
+      - name: wind_fcst_metric_avg
+        description: Raw forecasted average wind speed (metric units).
+        type: number
+        sql: wind_fcst_metric_avg
+        public: false  
+
+      - name: wind_fcst_metric_min
+        description: Raw forecasted minimum wind speed (metric units).
+        type: number
+        sql: wind_fcst_metric_min
+        public: false  
+
+      - name: wind_fcst_metric_max
+        description: Raw forecasted maximum wind speed (metric units).
+        type: number
+        sql: wind_fcst_metric_max
+        public: false  
+
+      - name: wind_fcst_imperial_avg
+        description: Raw forecasted average wind speed (imperial units).
+        type: number
+        sql: wind_fcst_imperial_avg
+        public: false  
+
+      - name: wind_fcst_imperial_min
+        description: Raw forecasted minimum wind speed (imperial units).
+        type: number
+        sql: wind_fcst_imperial_min
+        public: false  
+
+      - name: wind_fcst_imperial_max
+        description: Raw forecasted maximum wind speed (imperial units).
+        type: number
+        sql: wind_fcst_imperial_max
+        public: false  
+
+      - name: wind_direction_fcst_mtrc_avg
+        description: Raw forecasted average wind direction (metric units).
+        type: number
+        sql: wind_direction_fcst_mtrc_avg
+        public: false  
+
+      - name: wind_direction_fcst_mtrc_min
+        description: Raw forecasted minimum wind direction (metric units).
+        type: number
+        sql: wind_direction_fcst_mtrc_min
+        public: false    
+
+      - name: wind_direction_fcst_mtrc_max
+        description: Raw forecasted maximum wind direction (metric units).
+        type: number
+        sql: wind_direction_fcst_mtrc_max
+        public: false     
+
+      - name: wind_direction_fcst_imprl_avg
+        description: Raw forecasted average wind direction (imperial units).
+        type: number
+        sql: wind_direction_fcst_imprl_avg
+        public: false    
+
+      - name: wind_direction_fcst_imprl_min
+        description: Raw forecasted minimum wind direction (imperial units).
+        type: number
+        sql: wind_direction_fcst_imprl_min
+        public: false    
+
+      - name: wind_direction_fcst_imprl_max
+        description: Raw forecasted maximum wind direction (imperial units).
+        type: number
+        sql: wind_direction_fcst_imprl_max
+        public: false   
+
+
+      # - name: last_7_days
+      #   sql: CASE 
+      #           WHEN {TABLE.record_hour_utc} >= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '7' DAY 
+      #           THEN 'last_7_days' 
+      #         END
+      #   type: string
+      #   description: Label rows within the last 7 days (rolling, up to NOW(), UTC-safe).
+
+      # - name: today
+      #   sql: CASE 
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '1' DAY
+      #           THEN 'today'
+      #         END
+      #   type: string
+      #   description: Labels rows that belong to the current UTC calendar day.
+
+      # - name: day_7_after
+      #   sql: CASE 
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '7' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '8' DAY
+      #           THEN 'day_7_after'
+      #         END
+      #   type: string
+      #   description: Labels rows that belong to the UTC calendar day exactly 7 days after today.
+
+      # - name: forecast_cumulative
+      #   sql: CASE
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '1' DAY
+      #             THEN 'today'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '1' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '2' DAY
+      #             THEN 'day_1_after'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '2' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '3' DAY
+      #             THEN 'day_2_after'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '3' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '4' DAY
+      #             THEN 'day_3_after'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '4' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '5' DAY
+      #             THEN 'day_4_after'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '5' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '6' DAY
+      #             THEN 'day_5_after'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '6' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '7' DAY
+      #             THEN 'day_6_after'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '7' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '8' DAY
+      #             THEN 'day_7_after'
+      #         END
+      #   type: string
+      #   description: Labels rows for today and the next 7 days for forecast insights (UTC calendar days).
+
+
+      # - name: past_7_days
+      #   sql: CASE
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+      #             THEN 'day_1_before'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '2' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1' DAY
+      #             THEN 'day_2_before'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '3' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '2' DAY
+      #             THEN 'day_3_before'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '4' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '3' DAY
+      #             THEN 'day_4_before'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '5' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '4' DAY
+      #             THEN 'day_5_before'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '6' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '5' DAY
+      #             THEN 'day_6_before'
+      #           WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '7' DAY
+      #               AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '6' DAY
+      #             THEN 'day_7_before'
+      #         END
+      #   type: string
+      #   description: Labels rows for the past 7 days (UTC calendar days) in one dimension.
+    segments:
+      - name: last_7_days
+        sql: "{TABLE.record_hour_utc} between  (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '7' DAY and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"       
+        # type: string
+        description: Label rows within the last 7 days (rolling, up to NOW(), UTC-safe).
+      - name: last_6_days
+        sql: "{TABLE.record_hour_utc} between  (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '6' DAY and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"       
+        # type: string
+        description: Label rows within the last 6 days (rolling, up to NOW(), UTC-safe).
+      - name: last_5_days
+        sql: "{TABLE.record_hour_utc} between  (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '5' DAY and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"         
+        # type: string
+        description: Label rows within the last 5 days (rolling, up to NOW(), UTC-safe).
+      - name: last_4_days
+        sql: "{TABLE.record_hour_utc} between  (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '4' DAY and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"         
+        # type: string
+        description: Label rows within the last 4 days (rolling, up to NOW(), UTC-safe).
+      - name: last_3_days
+        sql: "{TABLE.record_hour_utc} between  (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '3' DAY and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"       
+        # type: string
+        description: Label rows within the last 3 days (rolling, up to NOW(), UTC-safe).
+
+      - name: last_2_days
+        sql: "{TABLE.record_hour_utc} between  (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '2' DAY and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"         
+        # type: string
+        description: Label rows within the last 2 days (rolling, up to NOW(), UTC-safe).
+
+      - name: yesterday
+        sql: "{TABLE.record_hour_utc} between  (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1' DAY and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"        
+        # type: string
+        description: Label rows within the last 1 days (rolling, up to NOW(), UTC-safe).
+
+      - name: today
+        sql: "(date({TABLE.record_hour_utc})) = (date(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'))"   
+        # type: string
+        description: Label rows within the today (rolling, up to NOW(), UTC-safe).
+
+      - name: after_7_days
+        sql: "{TABLE.record_hour_utc} between (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') and  (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '7' DAY"       
+        # type: string
+        description: Label rows within the after 7 days (rolling, up to NOW(), UTC+safe).
+      - name: after_6_days
+        sql: "{TABLE.record_hour_utc} between (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '6' DAY"        
+        # type: string
+        description: Label rows within the after 6 days (rolling, up to NOW(), UTC+safe).
+      - name: after_5_days
+        sql: "{TABLE.record_hour_utc} between (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '5' DAY"        
+        # type: string
+        description: Label rows within the after 5 days (rolling, up to NOW(), UTC+safe).
+      - name: after_4_days
+        sql: "{TABLE.record_hour_utc} between (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '4' DAY"       
+        # type: string
+        description: Label rows within the after 4 days (rolling, up to NOW(), UTC+safe).
+      - name: after_3_days
+        sql: "{TABLE.record_hour_utc} between (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '3' DAY"        
+        # type: string
+        description: Label rows within the after 3 days (rolling, up to NOW(), UTC+safe).
+      - name: after_2_days
+        sql: "{TABLE.record_hour_utc} between (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '2' DAY"      
+        # type: string
+        description: Label rows within the after 2 days (rolling, up to NOW(), UTC+safe).
+
+      - name: after_1_days
+        sql: "{TABLE.record_hour_utc} between (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '1' DAY "     
+        # type: string
+        description: Label rows within the after 1 days (rolling, up to NOW(), UTC+safe).
+
+      - name: last_6_hours
+        sql: "{TABLE.record_hour_utc} between  (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '6' Hour and (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"       
+        # type: string
+        description: Label rows within the after 1 days (rolling, up to NOW(), UTC-safe).
+
+      - name: next_12_hours
+        sql: "{TABLE.record_hour_utc} between (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') and  (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '12' Hour"      
+        # type: string
+        description: Label rows within the after 1 days (rolling, up to NOW(), UTC-safe).
+
+    measures:
+      - name: irrigation_depth_average
+        sql: AVG({TABLE.irrigation_depth_avg})
+        type: number
+        description: Average irrigation depth.
+
+      - name: irrigation_depth_maximum
+        sql: MAX({TABLE.irrigation_depth_max})
+        type: number
+        description: Maximum irrigation depth.
+
+      - name: irrigation_depth_minimum
+        sql: MIN({TABLE.irrigation_depth_min})
+        type: number
+        description: Minimum irrigation depth.
+        
+
+      - name: angular_position_average
+        sql: AVG({TABLE.angular_position_avg})
+        type: number
+        description: Average angular position of the pivot.
+
+      - name: angular_position_maximum
+        sql: MAX({TABLE.angular_position_max})
+        type: number
+        description: Maximum angular position recorded.
+
+      - name: angular_position_minimum
+        sql: MIN({TABLE.angular_position_min})
+        type: number
+        description: Minimum angular position recorded.
+
+      - name: pressure_psi_average
+        sql: AVG({TABLE.pressure_psi_avg})
+        type: number
+        description: Average pressure in PSI.
+
+      - name: pressure_psi_maximum
+        sql: MAX({TABLE.pressure_psi_max})
+        type: number
+        description: Maximum pressure in PSI.
+
+      - name: pressure_psi_minimum
+        sql: MIN({TABLE.pressure_psi_min})
+        type: number
+        description: Minimum pressure in PSI.
+
+      - name: pressure_kpa_average
+        sql: AVG({TABLE.pressure_kpa_avg})
+        type: number
+        description: Average pressure in kilopascals (kPa).
+
+      - name: pressure_kpa_maximum
+        sql: MAX({TABLE.pressure_kpa_max})
+        type: number
+        description: Maximum pressure in kilopascals (kPa).
+
+      - name: pressure_kpa_minimum
+        sql: MIN({TABLE.pressure_kpa_min})
+        type: number
+        description: Minimum pressure in kilopascals (kPa).
+
+      - name: rain_average  
+        sql: AVG({TABLE.rain_avg})
+        type: number
+        description: Average rain value.
+
+      - name: rain_maxaimum
+        sql: MAX({TABLE.rain_max})
+        type: number
+        description: Maximum rain value.  
+
+      - name: rain_minimum
+        sql: MAX({TABLE.rain_min})
+        type: number
+        description: Maximum rain value.  
+
+      - name: temp_c_obs_average
+        sql: AVG({TABLE.temp_c_obs_avg})
+        type: number
+        description: Average observed temperature in °C.
+
+      - name: temp_c_obs_minimum
+        sql: MIN({TABLE.temp_c_obs_min})
+        type: number
+        description: Minimum observed temperature in °C.
+
+      - name: temp_c_obs_maximum
+        sql: MAX({TABLE.temp_c_obs_max})
+        type: number
+        description: Maximum observed temperature in °C.
+
+      - name: temp_f_obs_average
+        sql: AVG({TABLE.temp_f_obs_avg})
+        type: number
+        description: Average observed temperature in °F.
+
+      - name: temp_f_obs_minimum
+        sql: MIN({TABLE.temp_f_obs_min})
+        type: number
+        description: Minimum observed temperature in °F.
+
+      - name: temp_f_obs_maximum
+        sql: MAX({TABLE.temp_f_obs_max})
+        type: number
+        description: Maximum observed temperature in °F.
+
+      - name: temp_c_hist_average
+        sql: AVG({TABLE.temp_c_hist_avg})
+        type: number
+        description: Historical average temperature in °C.
+
+      - name: temp_c_hist_minimum
+        sql: MIN({TABLE.temp_c_hist_min})
+        type: number
+        description: Historical minimum temperature in °C.
+
+      - name: temp_c_hist_maximum
+        sql: MAX({TABLE.temp_c_hist_max})
+        type: number
+        description: Historical maximum temperature in °C.
+
+      - name: temp_f_hist_average
+        sql: AVG({TABLE.temp_f_hist_avg})
+        type: number
+        description: Historical average temperature in °F.
+
+      - name: temp_f_hist_minimum
+        sql: MIN({TABLE.temp_f_hist_min})
+        type: number
+        description: Historical minimum temperature in °F.
+
+      - name: temp_f_hist_maximum
+        sql: MAX({TABLE.temp_f_hist_max})
+        type: number
+        description: Historical maximum temperature in °F.
+
+      # Wind speed
+      - name: wind_obs_metric_average
+        sql: AVG({TABLE.wind_obs_metric_avg})
+        type: number
+        description: Average observed wind speed (metric units).
+
+      - name: wind_obs_metric_minimum
+        sql: MIN({TABLE.wind_obs_metric_min})
+        type: number
+        description: Minimum observed wind speed (metric units).
+
+      - name: wind_obs_metric_maximum
+        sql: MAX({TABLE.wind_obs_metric_max})
+        type: number
+        description: Maximum observed wind speed (metric units).
+
+      - name: wind_obs_imperial_average
+        sql: AVG({TABLE.wind_obs_imperial_avg})
+        type: number
+        description: Average observed wind speed (imperial units).
+
+      - name: wind_obs_imperial_minimum
+        sql: MIN({TABLE.wind_obs_imperial_min})
+        type: number
+        description: Minimum observed wind speed (imperial units).
+
+      - name: wind_obs_imperial_maximum
+        sql: MAX({TABLE.wind_obs_imperial_max})
+        type: number
+        description: Maximum observed wind speed (imperial units).
+
+      - name: wind_hist_metric_average
+        sql: AVG({TABLE.wind_hist_metric_avg})
+        type: number
+        description: Historical average wind speed (metric units).
+
+      - name: wind_hist_metric_minimum
+        sql: MIN({TABLE.wind_hist_metric_min})
+        type: number
+        description: Historical minimum wind speed (metric units).
+
+      - name: wind_hist_metric_maximum
+        sql: MAX({TABLE.wind_hist_metric_max})
+        type: number
+        description: Historical maximum wind speed (metric units).
+
+      - name: wind_hist_imperial_average
+        sql: AVG({TABLE.wind_hist_imperial_avg})
+        type: number
+        description: Historical average wind speed (imperial units).
+
+      - name: wind_hist_imperial_minimum
+        sql: MIN({TABLE.wind_hist_imperial_min})
+        type: number
+        description: Historical minimum wind speed (imperial units).
+
+      - name: wind_hist_imperial_maximum
+        sql: MAX({TABLE.wind_hist_imperial_max})
+        type: number
+        description: Historical maximum wind speed (imperial units).
+
+      # Wind direction
+      - name: wind_direction_imperial_hist_average
+        sql: AVG({TABLE.wind_direction_imperial_hist_avg})
+        type: number
+        description: Historical average wind direction (imperial units).
+
+      - name: wind_direction_metric_hist_average
+        sql: AVG({TABLE.wind_direction_metric_hist_avg})
+        type: number
+        description: Historical average wind direction (metric units).
+
+      - name: wind_direction_imperial_real_average
+        sql: AVG({TABLE.wind_direction_imperial_real_avg})
+        type: number
+        description: Real-time average wind direction (imperial units).
+
+      - name: wind_direction_metric_real_average
+        sql: AVG({TABLE.wind_direction_metric_real_avg})
+        type: number
+        description: Real-time average wind direction (metric units).
+
+      - name: wind_direction_imperial_hist_maximum
+        sql: MAX({TABLE.wind_direction_imperial_hist_max})
+        type: number
+        description: Historical maximum wind direction (imperial units).
+
+      - name: wind_direction_metric_hist_maximum
+        sql: MAX({TABLE.wind_direction_metric_hist_max})
+        type: number
+        description: Historical maximum wind direction (metric units).
+
+      - name: wind_direction_imperial_real_maximum
+        sql: MAX({TABLE.wind_direction_imperial_real_max})
+        type: number
+        description: Real-time maximum wind direction (imperial units).
+
+      - name: wind_direction_metric_real_maximum
+        sql: MAX({TABLE.wind_direction_metric_real_max})
+        type: number
+        description: Real-time maximum wind direction (metric units).
+
+      - name: wind_direction_imperial_hist_minimum
+        sql: MIN({TABLE.wind_direction_imperial_hist_min})
+        type: number
+        description: Historical minimum wind direction (imperial units).
+
+      - name: wind_direction_metric_hist_minimum
+        sql: MIN({TABLE.wind_direction_metric_hist_min})
+        type: number
+        description: Historical minimum wind direction (metric units).
+
+      - name: wind_direction_imperial_real_minimum
+        sql: MIN({TABLE.wind_direction_imperial_real_min})
+        type: number
+        description: Real-time minimum wind direction (imperial units).
+
+      - name: wind_direction_metric_real_minimum
+        sql: MIN({TABLE.wind_direction_metric_real_min})
+        type: number
+        description: Real-time minimum wind direction (metric units).
+
+      # Forecasts
+      - name: temp_c_fcst_average
+        sql: AVG({TABLE.temp_c_fcst_avg})
+        type: number
+        description: Forecasted average temperature (°C).
+
+      - name: temp_c_fcst_minimum
+        sql: MIN({TABLE.temp_c_fcst_min})
+        type: number
+        description: Forecasted minimum temperature (°C).
+
+      - name: temp_c_fcst_maximum
+        sql: MAX({TABLE.temp_c_fcst_max})
+        type: number
+        description: Forecasted maximum temperature (°C).
+
+      - name: temp_f_fcst_average
+        sql: AVG({TABLE.temp_f_fcst_avg})
+        type: number
+        description: Forecasted average temperature (°F).
+
+      - name: temp_f_fcst_minimum
+        sql: MIN({TABLE.temp_f_fcst_min})
+        type: number
+        description: Forecasted minimum temperature (°F).
+
+      - name: temp_f_fcst_maximum
+        sql: MAX({TABLE.temp_f_fcst_max})
+        type: number
+        description: Forecasted maximum temperature (°F).
+
+      - name: wind_fcst_metric_average
+        sql: AVG({TABLE.wind_fcst_metric_avg})
+        type: number
+        description: Forecasted average wind speed (metric units).
+
+      - name: wind_fcst_metric_minimum
+        sql: MIN({TABLE.wind_fcst_metric_min})
+        type: number
+        description: Forecasted minimum wind speed (metric units).
+
+      - name: wind_fcst_metric_maximum
+        sql: MAX({TABLE.wind_fcst_metric_max})
+        type: number
+        description: Forecasted maximum wind speed (metric units).
+
+      - name: wind_fcst_imperial_average
+        sql: AVG({TABLE.wind_fcst_imperial_avg})
+        type: number
+        description: Forecasted average wind speed (imperial units).
+
+      - name: wind_fcst_imperial_minimum
+        sql: MIN({TABLE.wind_fcst_imperial_min})
+        type: number
+        description: Forecasted minimum wind speed (imperial units).
+
+      - name: wind_fcst_imperial_maximum
+        sql: MAX({TABLE.wind_fcst_imperial_max})
+        type: number
+        description: Forecasted maximum wind speed (imperial units).
+
+      - name: wind_direction_fcst_mtrc_average
+        sql: AVG({TABLE.wind_direction_fcst_mtrc_avg})
+        type: number
+        description: Forecasted average wind direction (metric units).
+
+      - name: wind_direction_fcst_mtrc_minimum
+        sql: MIN({TABLE.wind_direction_fcst_mtrc_min})
+        type: number
+        description: Forecasted minimum wind direction (metric units).
+
+      - name: wind_direction_fcst_mtrc_maximum
+        sql: MAX({TABLE.wind_direction_fcst_mtrc_max})
+        type: number
+        description: Forecasted maximum wind direction (metric units).
+
+      - name: wind_direction_fcst_imprl_average
+        sql: AVG({TABLE.wind_direction_fcst_imprl_avg})
+        type: number
+        description: Forecasted average wind direction (imperial units).
+
+      - name: wind_direction_fcst_imprl_minimum
+        sql: MIN({TABLE.wind_direction_fcst_imprl_min})
+        type: number
+        description: Forecasted minimum wind direction (imperial units).
+
+      - name: wind_direction_fcst_imprl_maximum
+        sql: MAX({TABLE.wind_direction_fcst_imprl_max})
+        type: number
+        description: Forecasted maximum wind direction (imperial units).
+
+  # -------------------------
+  # Current & Rolling Time Windows
+  # # -------------------------
+
+  #     - name: rows_last_3_hours
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= CURRENT_TIMESTAMP - INTERVAL '3' HOUR THEN 1 END)
+  #       type: number
+  #       description: Rows observed in the last 3 hours (rolling, up to NOW()).
+
+  #     - name: rows_last_6_hours
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= CURRENT_TIMESTAMP - INTERVAL '6' HOUR THEN 1 END)
+  #       type: number
+  #       description: Rows observed in the last 6 hours (rolling).
+
+  #     - name: rows_next_12_hours
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} > CURRENT_TIMESTAMP AND {TABLE.record_hour_utc} <= CURRENT_TIMESTAMP + INTERVAL '12' HOUR THEN 1 END)
+  #       type: number
+  #       description: Rows expected (forecast) in the next 12 hours (rolling forward).
+
+  # # -------------------------
+  # # Current Window & Today Metrics
+  # # -------------------------
+  #     - name: rows_current_window
+  #       sql: CASE WHEN {TABLE.record_hour_utc} >= CURRENT_TIMESTAMP - INTERVAL '3' HOUR End
+  #       type: number
+  #       description: Rows within the 'current' window (now and last 3 hours), aligning with Current insight.
+
+  #     - name: rows_today_observed
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE) AND {TABLE.record_hour_utc} <= CURRENT_TIMESTAMP THEN 1 END)
+  #       type: number
+  #       description: From local midnight to NOW() (observed part of today).
+
+  #     - name: rows_today_total
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE + INTERVAL '1' DAY) THEN 1 END)
+  #       type: number
+  #       description: From local midnight to end of local day (observed to now + forecast remainder). Uses is_forecast if you filter by it downstream.
+
+  # # -------------------------
+  # # Daily Insights (Individual Days)
+  # # -------------------------
+  #     - name: rows_today
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE + INTERVAL '1' DAY) THEN 1 END)
+  #       type: number
+  #       description: All rows for local calendar 'today'.
+
+  #     - name: rows_1_day_before
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE - INTERVAL '1' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 1 day before today.
+
+  #     - name: rows_2_days_before
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE - INTERVAL '2' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE - INTERVAL '1' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 2 days before today.
+
+  #     - name: rows_3_days_before
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE - INTERVAL '3' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE - INTERVAL '2' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 3 days before today.
+
+  #     - name: rows_4_days_before
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE - INTERVAL '4' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE - INTERVAL '3' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 4 days before today.
+
+  #     - name: rows_5_days_before
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE - INTERVAL '5' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE - INTERVAL '4' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 5 days before today.
+
+  #     - name: rows_6_days_before
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE - INTERVAL '6' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE - INTERVAL '5' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 6 days before today.
+
+  #     - name: rows_7_days_before
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE - INTERVAL '7' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE - INTERVAL '6' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 7 days before today.
+
+  #     - name: rows_1_day_after
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE + INTERVAL '1' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE + INTERVAL '2' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 1 day after today.
+
+  #     - name: rows_2_days_after
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE + INTERVAL '2' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE + INTERVAL '3' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 2 days after today.
+
+  #     - name: rows_3_days_after
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE + INTERVAL '3' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE + INTERVAL '4' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 3 days after today.
+
+  #     - name: rows_4_days_after
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE + INTERVAL '4' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE + INTERVAL '5' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 4 days after today.
+
+  #     - name: rows_5_days_after
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE + INTERVAL '5' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE + INTERVAL '6' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 5 days after today.
+
+  #     - name: rows_6_days_after
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE + INTERVAL '6' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE + INTERVAL '7' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 6 days after today.
+
+  #     - name: rows_7_days_after
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE + INTERVAL '7' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE + INTERVAL '8' DAY) THEN 1 END)
+  #       type: number
+  #       description: Rows for local day 7 days after today.
+
+
+  # # -------------------------
+  # # Cumulative Metrics
+  # # -------------------------
+  #     - name: rows_past_cum_1d
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE - INTERVAL '1' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE) THEN 1 END)
+  #       type: number
+  #       description: Cumulative rows over the last 1 day (1DayBefore).
+
+  #     - name: rows_past_cum_3d
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE - INTERVAL '3' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE) THEN 1 END)
+  #       type: number
+  #       description: Cumulative rows over the last 3 days (inclusive of 1..3 days before).
+
+  #     - name: rows_past_cum_7d
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE - INTERVAL '7' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE) THEN 1 END)
+  #       type: number
+  #       description: Cumulative rows over the last 7 days (inclusive of 1..7 days before).
+
+  #     - name: rows_forecast_cum_1d
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE + INTERVAL '1' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE + INTERVAL '2' DAY) THEN 1 END)
+  #       type: number
+  #       description: Cumulative rows over the next 1 day (tomorrow only).
+
+  #     - name: rows_forecast_cum_3d
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE + INTERVAL '1' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE + INTERVAL '4' DAY) THEN 1 END)
+  #       type: number
+  #       description: Cumulative rows over the next 3 days (inclusive of 1..3 days after).
+
+  #     - name: rows_forecast_cum_7d
+  #       sql: COUNT(CASE WHEN {TABLE.record_hour_utc} >= DATE_TRUNC('day', CURRENT_DATE + INTERVAL '1' DAY) AND {TABLE.record_hour_utc} < DATE_TRUNC('day', CURRENT_DATE + INTERVAL '8' DAY) THEN 1 END)
+  #       type: number
+  #       description: Cumulative rows over the next 7 days (inclusive of 1..7 days after).

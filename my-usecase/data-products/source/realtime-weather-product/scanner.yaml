@@ -1,0 +1,22 @@
+version: v1
+name: weather-realtime-scanner
+type: workflow
+description: Scan the weather realtime data product schema and register it into Metis.
+workspace: ${WORKSPACENAME}             # Replace with your workspace name
+workflow:
+  dag:
+    - name: weather-realtime-scanner
+      description: Scan the schema of the weather realtime data product and register it into Metis.
+      spec:
+        stack: scanner:2.0
+        compute: ${COMPUTENAME}        # Replace with compute name 
+        runAsUser: metis
+        stackSpec:
+          type: data-product
+          sourceConfig:
+            config:
+              type: DataProduct
+              markDeletedDataProducts: true
+              dataProductFilterPattern:
+                includes:
+                  - weather-realtime      # workflow name of the data product to scan

@@ -1,0 +1,27 @@
+name: hawk-enriched-bundle
+version: v1beta
+type: bundle
+tags:
+  - dataproduct
+  - dataos:type:resource
+  - dataos:resource:bundle
+description: The Hawk Telemetry Bundle provides a comprehensive data product for monitoring, analyzing, and maintaining the operational performance of Hawk devices.
+layer: "user"
+bundle:
+  resources:
+    - id: hawk_data_ingestion
+      file: data-products/consumer/bundle/hawk_enriched_v1.yaml             # Path to data ingestion YAML file
+
+    - id: hawk-enriched-quality-metric
+      file: data-products/consumer/bundle/hawk-enriched-quality-checks.yaml      # Path to quality checks YAML file
+
+    - id: hawk_semantic_model_minerva
+      file: data-products/consumer/bundle/semantic-model-minerva/hawk-device/deployment.yaml    # Path to semantic model deployment YAML file
+      # dependencyConditions:
+      #   - resourceId: hawk-enriched-quality-metric
+      #     status:
+      #       is:
+      #         - active   
+      #     runtime:
+      #       is: 
+      #         - running:1   

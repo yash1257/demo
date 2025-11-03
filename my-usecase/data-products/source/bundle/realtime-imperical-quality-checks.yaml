@@ -1,0 +1,122 @@
+name: realtime-imperial-quality
+version: v1
+type: workflow
+tags:
+  - Tier.Silver
+  - Domain.Water Management
+description: >
+  Data quality checks for realtime weather dataset (imperial units).
+  Ensures completeness, validity, accuracy, freshness, and schema consistency
+  of meteorological attributes.
+workspace: ${WORKSPACENAME}      # Replace with your DataOS workspace name
+workflow:
+  # schedule:
+  #   cron: '*/60 * * * *'        #  Runs every 60 minutes (modify for frequency)
+  #   concurrencyPolicy: Forbid
+  dag:
+    - name: realtime-imperial-quality-dag
+      title: Realtime Weather Imperial Data Quality Assertions
+      description: >
+        Validate completeness, validity, accuracy, schema, and consistency of
+        realtime_imperial dataset using physical plausibility rules.
+      spec:
+        stack: soda+python:2.0
+        logLevel: INFO
+        compute: ${COMPUTENAME}     # Replace with your compute resource name
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 100m
+            memory: 256Mi
+        stackSpec:
+          inputs:
+            - dataset: dataos://lakehouse:nilus/realtime_imperial?acl=rw           # Modify dataset path if using a different table
+              options:
+                engine: minerva
+                clusterName: ${CLUSTERNAME}         # Replace with your cluster name
+              filter: 
+                name: realtime_imperial             # Filters data for the current hour window — change if your data frequency differs
+                where: load_datetime >= date_trunc('hour', current_timestamp)
+                  AND load_datetime < date_trunc('hour', current_timestamp) + INTERVAL '1' HOUR    
+              checks:
+                
+                # COMPLETENESS
+                
+                - missing_count(pressure_sea_level) = 0:
+                    name: Completeness of pressure sea level
+                    attributes:
+                      category: Completeness
+
+                - missing_count(humidity) = 0:
+                    name: Completeness of Humidity
+                    attributes:
+                      category: Completeness
+
+                
+                # VALIDITY 
+
+                - invalid_count(temperature) = 0:
+                    valid min: -60
+                    valid max: 110
+                    name: Validity of Temperature (°F)
+                    attributes:
+                      category: Validity
+
+                - invalid_count(humidity) = 0:
+                    valid min: 0
+                    valid max: 100
+                    name: Validity of Humidity (%)
+                    attributes:
+                      category: Validity
+                
+                # ACCURACY / CONSISTENCY
+
+                - non_negative_precipitation:
+                    query: |
+                      SELECT COUNT(*) as invalid_records
+                      FROM realtime_imperial
+                      WHERE rain_intensity < 0
+                         OR sleet_intensity < 0
+                         OR snow_intensity < 0
+                         OR freezing_rain_intensity < 0
+                    name: Precipitation intensities must be non-negative
+                    attributes:
+                      category: Accuracy
+
+                
+                # FRESHNESS
+                
+                - freshness(load_datetime) < 1h:
+                    name: Realtime Load Freshness (< 1 hour)
+                    attributes:
+                      category: Freshness
+
+                
+                # --- Schema Checks ---
+                - schema:
+                    name: Confirm required weather columns are present
+                    warn:
+                      when required column missing: [humidity, wind_speed, wind_direction]
+                    fail:
+                      when required column missing:
+                        - load_datetime
+                        - temperature
+                        - wind_speed
+                        - latitude
+                        - longitude
+                    attributes:
+                      category: Schema
+
+
+              profile:
+                columns:
+                  - "humidity"
+                  - "rain_intensity"
+                  - "temperature"
+                  - "wind_direction"
+                  - "wind_speed" 
+                  - "wind_gust" 
+                  - "pressure_sea_level"
+                  - "wind_gust"

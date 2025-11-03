@@ -1,0 +1,743 @@
+name: hawk-telemetry-enriched-quality
+version: v1
+type: workflow
+tags:
+  - Tier.Silver
+  - Domain.Water Management
+description: Data quality workflow for the HAWK telemetry enriched dataset. This template
+  enforces completeness, validity, freshness, schema consistency and a basic
+  set of checks appropriate for the enriched telemetry table.
+workspace: ${WORKSPACENAME}     # Replace with your workspace name
+workflow:
+  schedule:
+    cron: "0 */25* * *"         # Runs every 25 minutes (modify for frequency)
+    concurrencyPolicy: Forbid
+  dag:
+    - name: hawk-telemetry-enriched-dag
+      title: HAWK Telemetry Enriched Data Quality Assertions
+      description: Apply data quality rules on the hawk_telemetry_enriched dataset
+        to validate completeness, accuracy, freshness and schema adherence.
+      spec:
+        stack: soda+python:2.0
+        logLevel: INFO
+        compute: ${COMPUTENAME}      # Replace with your compute name
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 100m
+            memory: 256Mi
+        stackSpec:
+          inputs:
+            - dataset: dataos://lakehouse:hawk/hawk_telemetry_enriched?acl=rw    # Modify dataset path if using a different table
+              options:
+                engine: minerva
+                clusterName: ${CLUSTERNAME}       # Replace with your cluster name  
+              filter:
+                name: hawk_telemetry_enriched      # Filters data for the current 25-minute window — change if your data frequency differs
+                where: load_datetime >= date_trunc('minute', current_timestamp)
+                  AND load_datetime < date_trunc('minute', current_timestamp) + INTERVAL '25' MINUTE  
+              checks:
+                # COMPLETENESS
+                - missing_count(device_serial) = 0:
+                    checks:
+                      # COMPLETENESS (missing_count = 0 for all important columns)
+                      - missing_count(device_serial) = 0:
+                          name: Completeness of Device Serial
+                          attributes:
+                            category: Completeness
+                      - missing_count(device_imei) = 0:
+                          name: Completeness of Device IMEI
+                          attributes:
+                            category: Completeness
+                      - missing_count(device_iccid) = 0:
+                          name: Completeness of Device ICCID
+                          attributes:
+                            category: Completeness
+                      - missing_count(device_type) = 0:
+                          name: Completeness of Device Type
+                          attributes:
+                            category: Completeness
+                      - missing_count(is_pivot_link) = 0:
+                          name: Completeness of is_pivot_link
+                          attributes:
+                            category: Completeness
+                      - missing_count(health_status_6hr_window) = 0:
+                          name: Completeness of Health Status 6hr Window
+                          attributes:
+                            category: Completeness
+                      - missing_count(gps_latitude_degrees) = 0:
+                          name: Completeness of GPS Latitude
+                          attributes:
+                            category: Completeness
+                      - missing_count(gps_longitude_degrees) = 0:
+                          name: Completeness of GPS Longitude
+                          attributes:
+                            category: Completeness
+                      - missing_count(gps_altitude_meters) = 0:
+                          name: Completeness of GPS Altitude
+                          attributes:
+                            category: Completeness
+                      - missing_count(record_hour_utc) = 0:
+                          name: Completeness of Record Hour UTC
+                          attributes:
+                            category: Completeness
+                      - missing_count(irrigation_event_type) = 0:
+                          name: Completeness of Irrigation Event Type
+                          attributes:
+                            category: Completeness
+                      - missing_count(irrigation_depth_max) = 0:
+                          name: Completeness of Irrigation Depth Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(irrigation_depth_min) = 0:
+                          name: Completeness of Irrigation Depth Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(irrigation_depth_avg) = 0:
+                          name: Completeness of Irrigation Depth Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(angular_position_avg) = 0:
+                          name: Completeness of Angular Position Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(angular_position_max) = 0:
+                          name: Completeness of Angular Position Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(angular_position_min) = 0:
+                          name: Completeness of Angular Position Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(pumping_status) = 0:
+                          name: Completeness of Pumping Status
+                          attributes:
+                            category: Completeness
+                      - missing_count(dominating_pumping_status) = 0:
+                          name: Completeness of Dominating Pumping Status
+                          attributes:
+                            category: Completeness
+                      - missing_count(observed_time) = 0:
+                          name: Completeness of Observed Time
+                          attributes:
+                            category: Completeness
+                      - missing_count(pressure_psi_avg) = 0:
+                          name: Completeness of Pressure (PSI avg)
+                          attributes:
+                            category: Completeness
+                      - missing_count(pressure_psi_max) = 0:
+                          name: Completeness of Pressure (PSI max)
+                          attributes:
+                            category: Completeness
+                      - missing_count(pressure_psi_min) = 0:
+                          name: Completeness of Pressure (PSI min)
+                          attributes:
+                            category: Completeness
+                      - missing_count(pressure_kpa_avg) = 0:
+                          name: Completeness of Pressure (kPa avg)
+                          attributes:
+                            category: Completeness
+                      - missing_count(pressure_kpa_max) = 0:
+                          name: Completeness of Pressure (kPa max)
+                          attributes:
+                            category: Completeness
+                      - missing_count(pressure_kpa_min) = 0:
+                          name: Completeness of Pressure (kPa min)
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_c_obs_avg) = 0:
+                          name: Completeness of Temp C Observed Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_obs_metric_avg) = 0:
+                          name: Completeness of Wind Metric Observed Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_f_obs_avg) = 0:
+                          name: Completeness of Temp F Observed Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_obs_imperial_avg) = 0:
+                          name: Completeness of Wind Imperial Observed Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_c_hist_avg) = 0:
+                          name: Completeness of Temp C Historical Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_hist_metric_avg) = 0:
+                          name: Completeness of Wind Historical Metric Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_f_hist_avg) = 0:
+                          name: Completeness of Temp F Historical Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_hist_imperial_avg) = 0:
+                          name: Completeness of Wind Historical Imperial Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_c_obs_min) = 0:
+                          name: Completeness of Temp C Observed Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_obs_metric_min) = 0:
+                          name: Completeness of Wind Metric Observed Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_f_obs_min) = 0:
+                          name: Completeness of Temp F Observed Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_obs_imperial_min) = 0:
+                          name: Completeness of Wind Imperial Observed Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_c_hist_min) = 0:
+                          name: Completeness of Temp C Historical Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_hist_metric_min) = 0:
+                          name: Completeness of Wind Historical Metric Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_f_hist_min) = 0:
+                          name: Completeness of Temp F Historical Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_hist_imperial_min) = 0:
+                          name: Completeness of Wind Historical Imperial Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_c_obs_max) = 0:
+                          name: Completeness of Temp C Observed Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_obs_metric_max) = 0:
+                          name: Completeness of Wind Metric Observed Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_f_obs_max) = 0:
+                          name: Completeness of Temp F Observed Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_obs_imperial_max) = 0:
+                          name: Completeness of Wind Imperial Observed Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_c_hist_max) = 0:
+                          name: Completeness of Temp C Historical Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_hist_metric_max) = 0:
+                          name: Completeness of Wind Historical Metric Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_f_hist_max) = 0:
+                          name: Completeness of Temp F Historical Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_hist_imperial_max) = 0:
+                          name: Completeness of Wind Historical Imperial Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_imperial_hist_avg) = 0:
+                          name: Completeness of Wind Direction Imperial Historical Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_metric_hist_avg) = 0:
+                          name: Completeness of Wind Direction Metric Historical Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_imperial_real_avg) = 0:
+                          name: Completeness of Wind Direction Imperial Real Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_metric_real_avg) = 0:
+                          name: Completeness of Wind Direction Metric Real Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_imperial_hist_max) = 0:
+                          name: Completeness of Wind Direction Imperial Historical Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_metric_hist_max) = 0:
+                          name: Completeness of Wind Direction Metric Historical Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_imperial_real_max) = 0:
+                          name: Completeness of Wind Direction Imperial Real Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_metric_real_max) = 0:
+                          name: Completeness of Wind Direction Metric Real Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_imperial_hist_min) = 0:
+                          name: Completeness of Wind Direction Imperial Historical Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_metric_hist_min) = 0:
+                          name: Completeness of Wind Direction Metric Historical Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_imperial_real_min) = 0:
+                          name: Completeness of Wind Direction Imperial Real Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_metric_real_min) = 0:
+                          name: Completeness of Wind Direction Metric Real Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_c_fcst_avg) = 0:
+                          name: Completeness of Temp C Forecast Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_fcst_metric_avg) = 0:
+                          name: Completeness of Wind Forecast Metric Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_f_fcst_avg) = 0:
+                          name: Completeness of Temp F Forecast Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_fcst_imperial_avg) = 0:
+                          name: Completeness of Wind Forecast Imperial Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_fcst_imprl_avg) = 0:
+                          name: Completeness of Wind Direction Forecast Imperial Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_fcst_mtrc_avg) = 0:
+                          name: Completeness of Wind Direction Forecast Metric Avg
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_c_fcst_max) = 0:
+                          name: Completeness of Temp C Forecast Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_fcst_metric_max) = 0:
+                          name: Completeness of Wind Forecast Metric Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_f_fcst_max) = 0:
+                          name: Completeness of Temp F Forecast Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_fcst_imperial_max) = 0:
+                          name: Completeness of Wind Forecast Imperial Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_fcst_imprl_max) = 0:
+                          name: Completeness of Wind Direction Forecast Imperial Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_fcst_mtrc_max) = 0:
+                          name: Completeness of Wind Direction Forecast Metric Max
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_c_fcst_min) = 0:
+                          name: Completeness of Temp C Forecast Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_fcst_metric_min) = 0:
+                          name: Completeness of Wind Forecast Metric Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(temp_f_fcst_min) = 0:
+                          name: Completeness of Temp F Forecast Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_fcst_imperial_min) = 0:
+                          name: Completeness of Wind Forecast Imperial Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_fcst_imprl_min) = 0:
+                          name: Completeness of Wind Direction Forecast Imperial Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(wind_direction_fcst_mtrc_min) = 0:
+                          name: Completeness of Wind Direction Forecast Metric Min
+                          attributes:
+                            category: Completeness
+                      - missing_count(field_status) = 0:
+                          name: Completeness of Field Status
+                          attributes:
+                            category: Completeness
+                      - missing_count(device_health_status) = 0:
+                          name: Completeness of Device Health Status
+                          attributes:
+                            category: Completeness
+                      - missing_count(is_forecast) = 0:
+                          name: Completeness of Is Forecast Flag
+                          attributes:
+                            category: Completeness
+                      - missing_count(data_quality_score) = 0:
+                          name: Completeness of Data Quality Score
+                          attributes:
+                            category: Completeness
+
+                      # UNIQUENESS
+                      # Allow a tiny percentage of duplicate rows while still
+                      # flagging larger duplicate events. Duplicates should be
+                      # extremely rare; use a percent tolerance and an absolute
+                      # absolute-count query threshold for safety.
+                      - duplicate_percent(device_serial, observed_time) < 0.01%:
+                          name: Acceptable duplicate percent for (device_serial, observed_time) (<0.01%)
+                          attributes:
+                            category: Uniqueness
+
+                      - duplicate_device_observed = 0:
+                          query: |
+                            SELECT COUNT(*) AS duplicate_device_observed
+                            FROM (
+                              SELECT device_serial, observed_time, COUNT(*) as cnt
+                              FROM hawk_telemetry_enriched
+                              GROUP BY device_serial, observed_time
+                              HAVING COUNT(*) > 1
+                            ) t
+                          name: Absolute duplicate count for (device_serial, observed_time)
+                          fail:
+                            when > 10
+                          attributes:
+                            category: Uniqueness
+
+                      # VALIDITY / RANGES (examples and sane operational bounds)
+                      # VALIDITY: use percent tolerances for noisy fields so a small
+                      # number of bad rows doesn't fail the pipeline. Keep the same
+                      # min/max bounds but allow a small invalid percent.
+                      - invalid_percent(gps_latitude_degrees) < 0.5%:
+                          valid min: -90
+                          valid max: 90
+                          name: Acceptable invalid percent for GPS Latitude (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(gps_longitude_degrees) < 0.5%:
+                          valid min: -180
+                          valid max: 180
+                          name: Acceptable invalid percent for GPS Longitude (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(gps_altitude_meters) < 1%:
+                          valid min: -430
+                          valid max: 10000
+                          name: Acceptable invalid percent for GPS Altitude (<1%)
+                          attributes:
+                            category: Validity
+
+                      - invalid_percent(pressure_kpa_avg) < 0.5%:
+                          valid min: 0
+                          valid max: 200
+                          name: Acceptable invalid percent for Pressure (kPa avg) (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(pressure_kpa_max) < 0.5%:
+                          valid min: 0
+                          valid max: 200
+                          name: Acceptable invalid percent for Pressure (kPa max) (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(pressure_kpa_min) < 0.5%:
+                          valid min: 0
+                          valid max: 200
+                          name: Acceptable invalid percent for Pressure (kPa min) (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(pressure_psi_avg) < 0.5%:
+                          valid min: -20
+                          valid max: 200
+                          name: Acceptable invalid percent for Pressure (PSI avg) (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(pressure_psi_max) < 0.5%:
+                          valid min: -20
+                          valid max: 200
+                          name: Acceptable invalid percent for Pressure (PSI max) (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(pressure_psi_min) < 0.5%:
+                          valid min: -20
+                          valid max: 200
+                          name: Acceptable invalid percent for Pressure (PSI min) (<0.5%)
+                          attributes:
+                            category: Validity
+
+                      # Temperatures
+                      - invalid_percent(temp_c_obs_avg) < 0.5%:
+                          valid min: -90
+                          valid max: 60
+                          name: Acceptable invalid percent for Observed Temp C Avg (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(temp_f_obs_avg) < 0.5%:
+                          valid min: -130
+                          valid max: 140
+                          name: Acceptable invalid percent for Observed Temp F Avg (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(temp_c_hist_avg) < 1%:
+                          valid min: -90
+                          valid max: 60
+                          name: Acceptable invalid percent for Historical Temp C Avg (<1%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(temp_f_hist_avg) < 1%:
+                          valid min: -130
+                          valid max: 140
+                          name: Acceptable invalid percent for Historical Temp F Avg (<1%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(temp_c_obs_min) < 0.5%:
+                          valid min: -90
+                          valid max: 60
+                          name: Acceptable invalid percent for Observed Temp C Min (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(temp_f_obs_min) < 0.5%:
+                          valid min: -130
+                          valid max: 140
+                          name: Acceptable invalid percent for Observed Temp F Min (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(temp_c_obs_max) < 0.5%:
+                          valid min: -90
+                          valid max: 60
+                          name: Acceptable invalid percent for Observed Temp C Max (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(temp_f_obs_max) < 0.5%:
+                          valid min: -130
+                          valid max: 140
+                          name: Acceptable invalid percent for Observed Temp F Max (<0.5%)
+                          attributes:
+                            category: Validity
+
+                      # Wind speeds
+                      - invalid_percent(wind_obs_metric_avg) < 0.5%:
+                          valid min: 0
+                          valid max: 150
+                          name: Acceptable invalid percent for Wind Metric Observed Avg (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(wind_obs_imperial_avg) < 0.5%:
+                          valid min: 0
+                          valid max: 335
+                          name: Acceptable invalid percent for Wind Imperial Observed Avg (<0.5%)
+                          attributes:
+                            category: Validity
+
+                      # Wind directions (0-360)
+                      - invalid_percent(wind_direction_imperial_hist_avg) < 0.5%:
+                          valid min: 0
+                          valid max: 360
+                          name: Acceptable invalid percent for Wind Direction Imperial Historical Avg (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(wind_direction_metric_hist_avg) < 0.5%:
+                          valid min: 0
+                          valid max: 360
+                          name: Acceptable invalid percent for Wind Direction Metric Historical Avg (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(wind_direction_imperial_real_avg) < 0.5%:
+                          valid min: 0
+                          valid max: 360
+                          name: Acceptable invalid percent for Wind Direction Imperial Real Avg (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(wind_direction_metric_real_avg) < 0.5%:
+                          valid min: 0
+                          valid max: 360
+                          name: Acceptable invalid percent for Wind Direction Metric Real Avg (<0.5%)
+                          attributes:
+                            category: Validity
+
+                      # Boolean/categorical checks
+                      - invalid_count(is_pivot_link) = 0:
+                          valid min: 0
+                          valid max: 1
+                          name: is_pivot_link should be boolean (0/1)
+                          attributes:
+                            category: Validity
+
+                      # Non-negative checks for irrigation depths
+                      - invalid_count(irrigation_depth_max) = 0:
+                          valid min: 0
+                          valid max: 10000
+                          name: irrigation_depth_max non-negative
+                          attributes:
+                            category: Validity
+                      - invalid_count(irrigation_depth_min) = 0:
+                          valid min: 0
+                          valid max: 10000
+                          name: irrigation_depth_min non-negative
+                          attributes:
+                            category: Validity
+                      - invalid_count(irrigation_depth_avg) = 0:
+                          valid min: 0
+                          valid max: 10000
+                          name: irrigation_depth_avg non-negative
+                          attributes:
+                            category: Validity
+
+                      # ACCURACY (query-based checks)
+                      - non_negative_irrigation = 0:
+                          query: |
+                            SELECT COUNT(*) AS non_negative_irrigation
+                            FROM   hawk_telemetry_enriched
+                            WHERE COALESCE(irrigation_depth_max,0) < 0
+                              OR COALESCE(irrigation_depth_min,0) < 0
+                              OR COALESCE(irrigation_depth_avg,0) < 0
+                          name: Irrigation depth fields must be non-negative
+                          attributes:
+                            category: Accuracy
+
+                      - pressure_conversion_consistency = 0:
+                          query: |
+                            SELECT COUNT(*) AS pressure_conversion_consistency
+                            FROM   hawk_telemetry_enriched
+                            WHERE pressure_kpa_avg IS NOT NULL
+                              AND pressure_psi_avg IS NOT NULL
+                              AND ABS(pressure_kpa_avg - pressure_psi_avg * 6.89476) > 1
+                          name: pressure_kpa_avg and pressure_psi_avg conversion mismatch beyond tolerance
+                          attributes:
+                            category: Accuracy
+
+                      - device_imei_length = 0:
+                          query: |
+                            SELECT COUNT(*) AS device_imei_length
+                            FROM   hawk_telemetry_enriched
+                            WHERE device_imei IS NOT NULL
+                              AND LENGTH(device_imei) NOT BETWEEN 15 AND 20
+                          name: device_imei length should be between 15 and 20 characters
+                          attributes:
+                            category: Accuracy
+
+                      - duplicate_device_observed = 0:
+                          query: |
+                            SELECT COUNT(*) AS duplicate_device_observed
+                            FROM (
+                              SELECT device_serial, observed_time, COUNT(*) as cnt
+                              FROM hawk_telemetry_enriched
+                              GROUP BY device_serial, observed_time
+                              HAVING COUNT(*) > 1
+                            ) t
+                          name: No duplicate (device_serial, observed_time)
+                          attributes:
+                            category: Accuracy
+
+                      # COMPLETENESS tolerances (allow small missing %)
+                      - missing_percent(device_imei) < 1%:
+                          name: Acceptable missing percent for device_imei (<1%)
+                          attributes:
+                            category: Completeness
+                      - missing_percent(gps_latitude_degrees) < 1%:
+                          name: Acceptable missing percent for gps_latitude_degrees (<1%)
+                          attributes:
+                            category: Completeness
+                      - missing_percent(gps_longitude_degrees) < 1%:
+                          name: Acceptable missing percent for gps_longitude_degrees (<1%)
+                          attributes:
+                            category: Completeness
+
+                      # VALIDITY tolerances (allow small invalid %)
+                      - invalid_percent(gps_latitude_degrees) < 0.5%:
+                          name: Acceptable invalid percent for gps_latitude_degrees (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(gps_longitude_degrees) < 0.5%:
+                          name: Acceptable invalid percent for gps_longitude_degrees (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(pressure_psi_avg) < 0.5%:
+                          name: Acceptable invalid percent for pressure_psi_avg (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(temp_metric_real_avg) < 0.5%:
+                          name: Acceptable invalid percent for temp_metric_real_avg (<0.5%)
+                          attributes:
+                            category: Validity
+                      - invalid_percent(wind_metric_real_avg) < 0.5%:
+                          name: Acceptable invalid percent for wind_metric_real_avg (<0.5%)
+                          attributes:
+                            category: Validity
+
+                      # Freshness
+                      - freshness(observed_time) < 7d:
+                          name: Freshness of Observed Time (within 7 days)
+                          attributes:
+                            category: Freshness
+
+                      # SCHEMA: warn for optional/many columns, fail for critical ones
+                      - schema:
+                          name: Required Columns Present (hawk_telemetry_enriched)
+                          # Most telemetry and forecast columns are important but optional.
+                          # Missing these will WARN but not fail the pipeline.
+                          warn:
+                            when required column missing:
+                              - device_iccid
+                              - is_pivot_link
+                              - health_status_6hr_window
+                              - gps_latitude_degrees
+                              - gps_longitude_degrees
+                              - gps_altitude_meters
+                              - irrigation_event_type
+                              - irrigation_depth_max
+                              - irrigation_depth_min
+                              - irrigation_depth_avg
+                              - angular_position_avg
+                              - angular_position_max
+                              - angular_position_min
+                              - pumping_status
+                              - dominating_pumping_status
+                              - field_status
+                              - device_health_status
+                              - data_quality_score
+                              - is_forecast
+                              - wind_direction_fcst_imprl_avg
+                              - wind_direction_fcst_mtrc_avg
+                              - wind_fcst_imperial_avg
+                              - wind_fcst_metric_avg
+                              - temp_c_fcst_avg
+                              - temp_f_fcst_avg
+                              - wind_direction_fcst_imprl_max
+                              - wind_direction_fcst_mtrc_max
+                              - wind_fcst_imperial_max
+                              - wind_fcst_metric_max
+                              - temp_c_fcst_max
+                              - temp_f_fcst_max
+                              - wind_direction_fcst_imprl_min
+                              - wind_direction_fcst_mtrc_min
+                              - wind_fcst_imperial_min
+                              - wind_fcst_metric_min
+                              - temp_c_fcst_min
+                              - temp_f_fcst_min
+                          # Core operational columns — fail if missing
+                          fail:
+                            when required column missing:
+                              - device_serial
+                              - device_imei
+                              - device_type
+                              - record_hour_utc
+                              - observed_time
+                          attributes:
+                            category: Schema
+
+              profile:
+                # Reduced profile columns to avoid unsupported profiling/histogram
+                # queries for timestamps and columns with no variance (single-value).
+                # Removed: device_serial, record_hour_utc, observed_time, gps_*
+                columns:
+                  - device_imei
+                  - device_type
+                  - pressure_psi_avg
+                  - pressure_kpa_avg
+                  - temp_metric_real_avg
+                  - wind_metric_real_avg
+                  - health_status_6hr_window
+                  - device_health_status
+                  - field_status
+                  - data_quality_score

@@ -1,0 +1,32 @@
+name: hawk-sensor-health-bundle
+version: v1beta
+type: bundle
+tags:
+  - dataproduct
+  - dataos:type:resource
+  - dataos:resource:bundle
+description: The Hawk Sensor Health Bundle provides a comprehensive data product for monitoring,analyzing, and maintaining the operational health of Hawk sensors
+layer: "user"
+bundle:
+  resources:
+    - id: hawk_six_hour_data_ingestion
+      file: data-products/aggregate/bundle/six_hr_detection_rule.yaml                    # Path to data ingestion YAML file
+
+    - id: sensor_health_quality_metric
+      file: data-products/aggregate/bundle/hawk-sensor-good-health-checks.yaml           # Path to quality metric YAML file
+
+    - id: hawk-sensor-semantic-model
+      file: data-products/aggregate/bundle/sensor-health-semantic-model/deployment.yaml  # Path to semantic model deployment YAML file
+      # dependencyConditions:
+      #   - resourceId: sensor_health_quality_metric
+      #     status:
+      #       is:
+      #         - active   
+      #     runtime:
+      #       is: 
+      #         - running:1   
+
+
+
+
+

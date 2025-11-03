@@ -1,0 +1,840 @@
+---
+version: v1
+name: hawk-device-enriched
+type: workflow
+tags:
+  - hawk enriched data
+  - arable hawk
+description: This workflow creates hawk enriched data from hawk device data with comprehensive weather integration.
+workspace: ${WORKSPACENAME}         # Replace with your workspace name
+workflow:
+  schedule:
+    cron: '*/20 * * * *'            # Runs every 20 minutes (modify for frequency)
+    concurrencyPolicy: Forbid
+  dag:
+    - name: dg-hawk-enriched
+      title: Hawk Enriched
+      description: This dag ingests hawk device data and creates enriched data with weather integration.
+      spec:
+        tags:
+          - hawk enriched data
+          - arable hawk
+        stack: flare:7.0
+        compute: ${COMPUTENAME}     # Replace with your compute name
+        flare:
+          driver:
+            coreLimit: 2000m
+            cores: 1
+            memory: 1000m
+          executor:
+            coreLimit: 6000m
+            cores: 2
+            instances: 1
+            memory: 4000m
+          job:
+            explain: TRUE
+            inputs:
+              - name: hawk_health
+                dataset: dataos://lakehouse:hawk/hawk_sensor_good_health?acl=rw                    
+                format: Iceberg
+                
+              - name: weather_realtime_imperial
+                dataset: dataos://lakehouse:weather/realtime_imperial?acl=r
+                format: Iceberg 
+
+              - name: weather_realtime_metric
+                dataset: dataos://lakehouse:weather/realtime_metric?acl=r
+                format: Iceberg 
+
+              - name: weather_historical_imperial
+                dataset: dataos://lakehouse:weather/historical_imperial?acl=r
+                format: Iceberg 
+
+              - name: weather_historical_metric
+                dataset: dataos://lakehouse:weather/historical_metric?acl=r
+                format: Iceberg 
+
+              - name: weather_forecast_imperial
+                dataset: dataos://lakehouse:weather/forecast__imperial?acl=r
+                format: Iceberg 
+
+              - name: weather_forecast_metric
+                dataset: dataos://lakehouse:weather/forecast__metric?acl=r
+                format: Iceberg  
+
+            logLevel: INFO
+            outputs:
+              - name: hawk_insights_ready
+                dataset: dataos://lakehouse:hawk/hawk_telemetry_enriched?acl=rw
+                format: Iceberg
+                description: Ingest Hawk Enriched Data with Weather Integration
+                title: Hawk data pre-calculated for DataOS Data Product with Weather
+                options:
+                  saveMode: overwrite
+                  # sort:
+                  #   mode: partition
+                  #   columns:
+                  #     - name: record_hour_utc
+                  #       order: asc
+                  iceberg:
+                    properties:
+                      write.format.default: parquet
+                      write.metadata.compression-codec: snappy
+                    # partitionSpec:
+                    #   - type: day
+                    #     column: record_hour_utc
+                    #     name: day
+
+            steps:
+              - sequence:
+                  - name: hawk_input
+                    sql: |
+                      SELECT
+                        device_serial,
+                        device_imei,
+                        device_iccid,
+                        device_prod_id,
+                        device_firmware,
+                        device_type,
+                        is_pivot_link,
+                        record_seq_no,
+                        record_reason,
+                        record_date_utc,
+                        reason_description,
+                        gps_latitude_degrees,
+                        gps_longitude_degrees,
+                        gps_altitude_meters,
+                        gps_heading_degrees,
+                        gps_speed_kmh,
+                        gps_fix_ok,
+                        gps_3d_fix,
+                        gps_last_fix_failed,
+                        device_vbatt_good,
+                        device_connected_to_gsm,
+                        rain_link_mm AS rain,
+                        is_baseline,
+                        is_high_limit,
+                        is_irrigation_threshold,gps_latitude_raw,
+                        gps_longitude_raw,
+                        is_standard_irrigation,
+                        is_sensor_disconnect,
+                        is_low_pressure_irrigation,
+                        device_temperature_c AS tair,
+                        signal_strength_dbm,
+                        pressure_psi,
+                        pressure_kpa,
+                        health_status_6hr_window,
+                        device_tamper_alert,
+                        pressure_category
+                        from hawk_health
+                        where record_date_utc is not null
+                  
+
+
+
+                  - name: max_date_forecast_imperial 
+                    sql: |      
+                          select max(load_datetime) as max_forecast_imperial from weather_forecast_imperial
+                        
+                  - name: max_date_forecast_metric  
+                    sql: |         
+                          select max(load_datetime) as max_forecast_metric from weather_forecast_metric
+
+                  - name: max_date_realtime_metric  
+                    sql: |         
+                          select max(load_datetime) as max_realtime_metric  from weather_realtime_metric
+                          
+                  - name: max_date_realtime_imperial 
+                    sql: |         
+                          select max(load_datetime) as max_realtime_imperial  from weather_realtime_imperial
+                          
+                  - name: max_date_historical_metric
+                    sql: |         
+                          select max(load_datetime) as max_historical_metric from weather_historical_metric
+                          
+                  - name: max_date_historical_imperial 
+                    sql: |         
+                          select max(load_datetime) as historical_imperial  from weather_historical_imperial
+
+
+                  - name: observed_enriched
+                    sql: |
+                          SELECT
+                              d.device_serial,
+                              date_trunc('hour', s.x) AS record_hour_utc,
+                              h.device_imei,
+                              h.device_iccid,
+                              h.device_type,
+                              h.is_pivot_link,
+                              h.health_status_6hr_window,
+                              h.gps_altitude_meters,
+                              h.pressure_psi,
+                              h.tair,
+                              h.rain,
+                              h.gps_latitude_degrees,
+                              h.gps_longitude_degrees,
+                              h.gps_heading_degrees,
+                              h.device_connected_to_gsm,
+                              h.signal_strength_dbm,
+                              h.device_vbatt_good,
+                              h.device_tamper_alert,
+                              h.pressure_category,
+                              h.is_baseline,
+                              h.is_high_limit,
+                              h.is_irrigation_threshold,
+                              h.is_standard_irrigation,
+                              h.is_sensor_disconnect,
+                              h.is_low_pressure_irrigation,
+                              h.pressure_kpa,
+                              h.gps_speed_kmh,
+                              h.gps_fix_ok,
+                              h.gps_latitude_raw ,
+                              h.gps_longitude_raw,
+                              h.gps_3d_fix,
+                              h.gps_last_fix_failed,
+
+                            w2.temperature AS temp_metric_realtime,
+                            w2.wind_speed  AS wind_metric_realtime,
+                            w1.temperature AS temp_imperial_realtime,
+                            w1.wind_speed  AS wind_imperial_realtime,
+                              w1.wind_direction as wind_direction_imperial_realtime, 
+                            w2.wind_direction as wind_direction_metric_realtime, 
+
+                            w5.temperature AS temp_metric_historical,
+                            w5.wind_speed  AS wind_metric_historical,
+                            w4.temperature AS temp_imperial_historical,
+                            w4.wind_speed  AS wind_imperial_historical,
+                            w1.wind_direction as wind_direction_imperial_historical, 
+                            w2.wind_direction as wind_direction_metric_historical, 
+                            NULL AS temp_metric_forecast,
+                            NULL AS wind_metric_forecast,
+                            NULL AS temp_imperial_forecast,
+                            NULL AS wind_imperial_forecast,
+                            null  as wind_direction_imperial_forecast, 
+                            null as wind_direction_metric_forecast, 
+                            false AS is_forecast
+                                FROM (SELECT DISTINCT device_serial FROM hawk_input) d
+                                CROSS JOIN (
+                                    SELECT explode(
+                                      sequence(
+                                        date_trunc('hour', current_timestamp() - INTERVAL 7 days),
+                                        date_trunc('hour', current_timestamp()),
+                                        INTERVAL 1 hour
+                                      )
+                                    ) AS x
+                                ) s
+                                LEFT JOIN hawk_input h
+                                  ON h.device_serial = d.device_serial
+                                AND date_trunc('hour', h.record_date_utc) = s.x
+
+                                left JOIN weather_realtime_metric  w2
+                                  ON ABS(h.gps_latitude_raw - w2.latitude
+                              ) < 0.01
+                                AND  ABS(
+                                h.gps_longitude_raw - w2.longitude) < 0.01
+                                AND s.x = date_trunc('hour', w2.time)
+
+                                LEFT JOIN weather_realtime_imperial w1
+                                  ON ABS(h.gps_latitude_raw - w1.latitude
+                              ) < 0.01
+                                AND  ABS(
+                                h.gps_longitude_raw - w1.longitude) < 0.01
+                                AND s.x = date_trunc('hour', w1.time)
+                                
+                                LEFT JOIN weather_historical_metric w5
+                                  ON ABS(h.gps_latitude_degrees - w5.latitude) < 0.01
+                                AND ABS(h.gps_longitude_degrees - w5.longitude) < 0.01
+                                AND date_trunc('hour', w5.time) = s.x
+                                AND w5.load_datetime = (SELECT max_historical_metric FROM max_date_historical_metric)
+                                
+                                LEFT JOIN weather_historical_imperial w4
+                                  ON ABS(h.gps_latitude_degrees - w4.latitude) < 0.01
+                                AND ABS(h.gps_longitude_degrees - w4.longitude) < 0.01
+                                AND date_trunc('hour', w4.time) = s.x
+                                AND w4.load_datetime = (SELECT historical_imperial FROM max_date_historical_imperial)
+                  
+                  - name: forecast_enriched
+                    sql: |
+                           SELECT 
+                              d.device_serial,
+                              date_trunc('hour', w8.time) AS record_hour_utc,
+                              null as device_imei,
+                              null as device_iccid,
+                              null as device_type,
+                              null as is_pivot_link,
+                              null as health_status_6hr_window,
+                              null as gps_altitude_meters,
+                              null as pressure_psi,
+                              null as tair,
+                              null as rain,
+                              null as gps_latitude_degrees,
+                              null as gps_longitude_degrees,
+                              null as gps_heading_degrees,
+                              null as device_connected_to_gsm,
+                              null as signal_strength_dbm,
+                              null as device_vbatt_good,
+                              null as device_tamper_alert,
+                              null as pressure_category,
+                              null as is_baseline,
+                              null as is_high_limit,
+                              null as is_irrigation_threshold,
+                              null as is_standard_irrigation,
+                              null as is_sensor_disconnect,
+                              null as is_low_pressure_irrigation,
+                              null as pressure_kpa,
+                              null as gps_speed_kmh,
+                              null as gps_fix_ok,
+                              null as gps_latitude_raw ,
+                              null as gps_longitude_raw,
+                              null as gps_3d_fix,
+                              null as gps_last_fix_failed,
+                              Null AS temp_metric_realtime,
+                              Null  AS wind_metric_realtime,
+                              Null AS temp_imperial_realtime,
+                              Null  AS wind_imperial_realtime,
+                              Null as wind_direction_imperial_realtime, 
+                              Null as wind_direction_metric_realtime, 
+                              Null AS temp_metric_historical,
+                              Null  AS wind_metric_historical,
+                              Null AS temp_imperial_historical,
+                              Null  AS wind_imperial_historical,
+                              Null as wind_direction_imperial_historical, 
+                              Null as wind_direction_metric_historical, 
+
+                              w8.temperature AS temp_metric_forecast,
+                              w8.wind_speed  AS wind_metric_forecast,
+                              w7.temperature AS temp_imperial_forecast,
+                              w7.wind_speed  AS wind_imperial_forecast,
+                              w7.wind_direction  as wind_direction_imperial_forecast, 
+                              w8.wind_direction as wind_direction_metric_forecast, 
+                              true AS is_forecast
+                            FROM (SELECT DISTINCT device_serial FROM hawk_input) d
+                            CROSS JOIN (
+                                SELECT DISTINCT date_trunc('hour', time) AS time,
+                                                latitude,
+                                                longitude,
+                                                temperature,
+                                                wind_speed,
+                                                wind_direction
+                                FROM weather_forecast_metric
+                                WHERE time >= current_timestamp() and load_datetime = (select * from max_date_forecast_metric)
+                            ) w8
+                            LEFT JOIN weather_forecast_imperial w7
+                              ON date_trunc('hour', w7.time) = date_trunc('hour', w8.time)
+                            AND ABS(w7.latitude - w8.latitude) < 0.01
+                            AND ABS(w7.longitude - w8.longitude) < 0.01
+                            and load_datetime = (select * from max_date_forecast_imperial)
+
+                  - name: weather_enriched
+                    sql: |
+                          SELECT * FROM observed_enriched
+                            UNION ALL
+                          SELECT * FROM forecast_enriched
+
+                  - name: field_status_calc
+                    sql: |
+                          SELECT *,
+                              CASE 
+                                  WHEN pressure_category IN ('Sensor Disconnect','Fault_Negative_Pressure','Exceeds Practical Limit') THEN 'Red'
+                                  WHEN device_connected_to_gsm = false THEN 'Red'
+                                  WHEN pressure_category = 'High Pressure' THEN 'Yellow'
+                                  WHEN pressure_category = 'Below Irrigation Threshold' THEN 'Yellow'
+                                  WHEN pressure_category IN ('Baseline/Pivot Off','Low Pressure Irrigation','Standard Irrigation') THEN 'Green'
+                                  ELSE 'Green'
+                              END AS field_status,
+                              CASE 
+                                  WHEN device_connected_to_gsm = false THEN 'Offline'
+                                  WHEN signal_strength_dbm < -100 THEN 'Degraded'
+                                  WHEN device_vbatt_good = false THEN 'Low Battery'
+                                  WHEN device_tamper_alert = true THEN 'Tamper Alert'
+                                  ELSE 'Online'
+                              END AS device_health_status
+                             FROM weather_enriched
+
+
+                  - name: irrigation_events
+                    sql: | 
+                          SELECT *,
+                              CASE 
+                                  WHEN LAG(pressure_psi) OVER (PARTITION BY device_serial ORDER BY record_hour_utc) < 3 
+                                      AND pressure_psi >= 3 THEN 'irrigation_start'
+                                  WHEN LAG(pressure_psi) OVER (PARTITION BY device_serial ORDER BY record_hour_utc) >= 3 
+                                      AND pressure_psi < 3 THEN 'irrigation_end'
+                                  ELSE NULL
+                              END AS irrigation_event_type,
+
+                              CASE 
+                                  WHEN pressure_psi >= 3 THEN (pressure_psi - 3) * 0.1
+                                  ELSE 0
+                              END AS irrigation_depth,
+
+                              gps_heading_degrees AS angular_position,
+
+                              CASE 
+                                  WHEN pressure_psi >= 15 THEN 1
+                                  WHEN pressure_psi >= 5 THEN 2
+                                  WHEN pressure_psi >= 3 THEN 3
+                                  ELSE 0
+                              END AS pumping_status,
+
+                              CASE 
+                                  WHEN pressure_psi >= 15 THEN 1
+                                  WHEN pressure_psi >= 5 THEN 2
+                                  WHEN pressure_psi >= 3 THEN 3
+                                  ELSE 0
+                              END AS dominating_pumping_status
+                          FROM field_status_calc
+
+
+                  - name: quality_enriched
+                    sql: | 
+                          SELECT *,
+                              CASE 
+                                  WHEN gps_latitude_degrees IS NOT NULL AND pressure_psi IS NOT NULL AND device_connected_to_gsm = true THEN 100
+                                  WHEN gps_latitude_degrees IS NOT NULL AND pressure_psi IS NOT NULL THEN 80
+                                  WHEN pressure_psi IS NOT NULL THEN 60
+                                  ELSE 40
+                              END AS data_quality_score
+                          FROM irrigation_events
+
+                  - name: hourly_rollup_insights
+                    sql: | 
+                           SELECT
+                              device_serial,
+                              device_imei,
+                              device_iccid,
+                              device_type,
+                              is_pivot_link,
+                              health_status_6hr_window,
+                              gps_latitude_degrees,
+                              gps_longitude_degrees,
+                              gps_altitude_meters,
+                              record_hour_utc,
+                              irrigation_event_type,
+                              avg(rain) as rain_avg,
+                              max(rain) as rain_max,
+                              min(rain) as rain_min,
+                              Max(irrigation_depth) AS irrigation_depth_MAX,
+                              MIN(irrigation_depth) AS irrigation_depth_Min,
+                              AVG(irrigation_depth) AS irrigation_depth_AVG,
+                              avg(angular_position) as angular_position_avg,
+                              Max(angular_position) as angular_position_max,
+                              min(angular_position) as angular_position_min,      
+                              pumping_status,
+                              dominating_pumping_status,
+                              record_hour_utc AS observed_time,
+                              AVG(pressure_psi) AS pressure_psi_avg,
+                              MAX(pressure_psi) AS pressure_psi_max,
+                              min(pressure_psi) AS pressure_psi_min,
+                              AVG(pressure_kpa) AS pressure_kpa_avg,
+                              MAX(pressure_kpa) AS pressure_kpa_max,
+                              min(pressure_kpa) AS pressure_kpa_min,
+                              AVG(temp_metric_realtime)   AS temp_c_obs_avg,
+                              AVG(wind_metric_realtime)   AS wind_obs_metric_avg,
+                              AVG(temp_imperial_realtime) AS temp_f_obs_avg,
+                              AVG(wind_imperial_realtime) AS wind_obs_imperial_avg,
+                              AVG(temp_metric_historical)   AS temp_c_hist_avg,
+                              AVG(wind_metric_historical)   AS wind_hist_metric_avg,
+                              AVG(temp_imperial_historical) AS temp_f_hist_avg,
+                              AVG(wind_imperial_historical) AS wind_hist_imperial_avg,
+                              min(temp_metric_realtime)   AS temp_c_obs_min,
+                              min(wind_metric_realtime)   AS wind_obs_metric_min,
+                              min(temp_imperial_realtime) AS temp_f_obs_min,
+                              min(wind_imperial_realtime) AS wind_obs_imperial_min,
+                              min(temp_metric_historical)   AS temp_c_hist_min,
+                              min(wind_metric_historical)   AS wind_hist_metric_min,
+                              min(temp_imperial_historical) AS temp_f_hist_min,
+                              min(wind_imperial_historical) AS wind_hist_imperial_min,
+                              max(temp_metric_realtime)   AS temp_c_obs_max,
+                              max(wind_metric_realtime)   AS wind_obs_metric_max,
+                              max(temp_imperial_realtime) AS temp_f_obs_max,
+                              max(wind_imperial_realtime) AS wind_obs_imperial_max,
+                              max(temp_metric_historical)   AS temp_c_hist_max,
+                              max(wind_metric_historical)   AS wind_hist_metric_max,
+                              max(temp_imperial_historical) AS temp_f_hist_max,
+                              max(wind_imperial_historical) AS wind_hist_imperial_max,
+                              AVG(wind_direction_imperial_historical) as wind_direction_imperial_hist_avg ,
+                              AVG(wind_direction_metric_historical) as wind_direction_metric_hist_avg, 
+                              AVG(wind_direction_imperial_realtime) as wind_direction_imperial_real_avg, 
+                              AVG(wind_direction_metric_realtime) as wind_direction_metric_real_avg, 
+                              max(wind_direction_imperial_historical) as wind_direction_imperial_hist_max ,
+                              max(wind_direction_metric_historical) as wind_direction_metric_hist_max, 
+                              max(wind_direction_imperial_realtime) as wind_direction_imperial_real_max, 
+                              max(wind_direction_metric_realtime) as wind_direction_metric_real_max, 
+                              min(wind_direction_imperial_historical) as wind_direction_imperial_hist_min,
+                              min(wind_direction_metric_historical) as wind_direction_metric_hist_min, 
+                              min(wind_direction_imperial_realtime) as wind_direction_imperial_real_min, 
+                              min(wind_direction_metric_realtime) as wind_direction_metric_real_min,
+                              AVG(temp_metric_forecast)   AS temp_c_fcst_avg,
+                              AVG(wind_metric_forecast)   AS wind_fcst_metric_avg,
+                              AVG(temp_imperial_forecast) AS temp_f_fcst_avg,
+                              AVG(wind_imperial_forecast) AS wind_fcst_imperial_avg,
+                              AVG(wind_direction_imperial_forecast) as wind_direction_fcst_imprl_avg , 
+                              AVG(wind_direction_metric_forecast) as wind_direction_fcst_mtrc_avg , 
+                              max(temp_metric_forecast)   AS temp_c_fcst_max,
+                              max(wind_metric_forecast)   AS wind_fcst_metric_max,
+                              max(temp_imperial_forecast) AS temp_f_fcst_max,
+                              max(wind_imperial_forecast) AS wind_fcst_imperial_max,
+                              max(wind_direction_imperial_forecast) as wind_direction_fcst_imprl_max , 
+                              max(wind_direction_metric_forecast) as wind_direction_fcst_mtrc_max , 
+                              min(temp_metric_forecast)   AS temp_c_fcst_min,
+                              min(wind_metric_forecast)   AS wind_fcst_metric_min,
+                              min(temp_imperial_forecast) AS temp_f_fcst_min,
+                              min(wind_imperial_forecast) AS wind_fcst_imperial_min,
+                              min(wind_direction_imperial_forecast) as wind_direction_fcst_imprl_min , 
+                              min(wind_direction_metric_forecast) as wind_direction_fcst_mtrc_min , 
+                              field_status,
+                              device_health_status,
+                              MAX(CASE WHEN is_forecast THEN 1 ELSE 0 END) AS is_forecast,
+                              AVG(data_quality_score) AS data_quality_score
+                            FROM quality_enriched
+                            GROUP BY device_serial,  device_imei,
+                                device_iccid,
+                                device_type,
+                                is_pivot_link,
+                                health_status_6hr_window,
+                                gps_latitude_degrees,
+                                gps_longitude_degrees,
+                                gps_altitude_meters,
+                                record_hour_utc,
+                                device_health_status,
+                                irrigation_event_type,
+                                pumping_status,
+                                dominating_pumping_status,
+                                field_status
+
+                  - name: today_observed_insights
+                    sql: | 
+                          SELECT
+                            device_serial,
+                            device_imei,
+                            device_iccid,
+                            device_type,
+                            is_pivot_link,
+                            health_status_6hr_window,
+                            gps_latitude_degrees,
+                            gps_longitude_degrees,
+                            gps_altitude_meters,
+                            record_hour_utc,
+                            irrigation_event_type,
+                            AVG(CASE WHEN record_hour_utc <  current_timestamp() Then rain end) as rain_avg,
+                            Max(CASE WHEN record_hour_utc <  current_timestamp() THEN rain end) as rain_max,
+                            Min(CASE WHEN record_hour_utc <  current_timestamp() THEN rain end) as rain_min,
+                            Max(CASE WHEN record_hour_utc <  current_timestamp() THEN irrigation_depth end) AS irrigation_depth_MAX,
+                             Min(CASE WHEN record_hour_utc <  current_timestamp() THEN irrigation_depth end) AS irrigation_depth_Min,
+                            AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN irrigation_depth end) AS irrigation_depth_AVG,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN angular_position end) as angular_position_avg,
+
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN angular_position end) as angular_position_max,
+                               Min(CASE WHEN record_hour_utc <  current_timestamp() THEN angular_position end) as angular_position_min, 
+                              pumping_status,
+                              dominating_pumping_status,
+                              record_hour_utc AS observed_time,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN pressure_psi end) AS pressure_psi_avg,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN pressure_psi end) AS pressure_psi_max,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN pressure_psi end) AS pressure_psi_min,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN pressure_kpa end) AS pressure_kpa_avg,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN pressure_kpa end) AS pressure_kpa_max,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN pressure_kpa end) AS pressure_kpa_min,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_realtime end)   AS temp_c_obs_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_realtime end)   AS wind_obs_metric_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_realtime end) AS temp_f_obs_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_realtime end) AS wind_obs_imperial_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_historical end)   AS temp_c_hist_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_historical end)   AS wind_hist_metric_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_historical end) AS temp_f_hist_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_historical end) AS wind_hist_imperial_avg,
+
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_realtime end)   AS temp_c_obs_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_realtime end)   AS wind_obs_metric_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_realtime end) AS temp_f_obs_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_realtime end) AS wind_obs_imperial_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_historical end)   AS temp_c_hist_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_historical end)   AS wind_hist_metric_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_historical end) AS temp_f_hist_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_historical end) AS wind_hist_imperial_min,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_realtime end)   AS temp_c_obs_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_realtime end)   AS wind_obs_metric_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_realtime end) AS temp_f_obs_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_realtime end) AS wind_obs_imperial_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_historical end)   AS temp_c_hist_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_historical end)   AS wind_hist_metric_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_historical end) AS temp_f_hist_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_historical end) AS wind_hist_imperial_max,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_historical end) as wind_direction_imperial_hist_avg ,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_historical end) as wind_direction_metric_hist_avg, 
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_realtime end) as wind_direction_imperial_real_avg, 
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_realtime end) as wind_direction_metric_real_avg, 
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_historical end) as wind_direction_imperial_hist_max ,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_historical end) as wind_direction_metric_hist_max, 
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_realtime end) as wind_direction_imperial_real_max, 
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_realtime end) as wind_direction_metric_real_max, 
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_historical end) as wind_direction_imperial_hist_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_historical end) as wind_direction_metric_hist_min, 
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_realtime end) as wind_direction_imperial_real_min, 
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_realtime end) as wind_direction_metric_real_min,
+                              Null   AS temp_c_fcst_avg,
+                              Null   AS wind_fcst_metric_avg,
+                              Null AS temp_f_fcst_avg,
+                              Null AS wind_fcst_imperial_avg,
+                              Null as wind_direction_fcst_imprl_avg , 
+                              Null as wind_direction_fcst_mtrc_avg , 
+                              Null   AS temp_c_fcst_max,
+                              Null   AS wind_fcst_metric_max,
+                              Null AS temp_f_fcst_max,
+                              Null AS wind_fcst_imperial_max,
+                              Null as wind_direction_fcst_imprl_max , 
+                              Null as wind_direction_fcst_mtrc_max , 
+                              Null   AS temp_c_fcst_min,
+                              Null   AS wind_fcst_metric_min,
+                              Null AS temp_f_fcst_min,
+                              Null AS wind_fcst_imperial_min,
+                              Null as wind_direction_fcst_imprl_min , 
+                              Null as wind_direction_fcst_mtrc_min , 
+                              field_status,
+                              device_health_status,
+                              0 AS is_forecast,
+                              AVG(data_quality_score) AS data_quality_score
+                                  FROM quality_enriched
+                                  WHERE DATE(record_hour_utc) = date(current_date) and hour(record_hour_utc) <= hour(current_timestamp()) 
+                                  GROUP BY device_serial,
+                              device_imei,
+                              device_iccid,
+                              device_type,
+                              is_pivot_link,
+                              health_status_6hr_window,
+                              gps_latitude_degrees,
+                              gps_longitude_degrees,
+                              gps_altitude_meters,
+                              record_hour_utc,
+                              irrigation_event_type,
+                              pumping_status,
+                              dominating_pumping_status,
+                              field_status,
+                              device_health_status
+
+                  - name: today_total_insights
+                    sql: | 
+                          Select
+                            device_serial,
+                              device_imei,
+                              device_iccid,
+                              device_type,
+                              is_pivot_link,
+                              health_status_6hr_window,
+                              gps_latitude_degrees,
+                              gps_longitude_degrees,
+                              gps_altitude_meters,
+                              record_hour_utc,
+                              irrigation_event_type,
+                              avg(rain) as rain_avg,
+                              max(rain) as rain_max,
+                               min(rain) as rain_min,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN irrigation_depth end) AS irrigation_depth_MAX,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN irrigation_depth end) AS irrigation_depth_Min,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN irrigation_depth end) AS irrigation_depth_AVG,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN angular_position end) as angular_position_avg,
+
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN angular_position end) as angular_position_max,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN angular_position end) as angular_position_min, 
+                              pumping_status,
+                              dominating_pumping_status,
+                              record_hour_utc AS observed_time,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN pressure_psi end) AS pressure_psi_avg,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN pressure_psi end) AS pressure_psi_max,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN pressure_psi end) AS pressure_psi_min,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN pressure_kpa end) AS pressure_kpa_avg,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN pressure_kpa end) AS pressure_kpa_max,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN pressure_kpa end) AS pressure_kpa_min,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_realtime end)   AS temp_c_obs_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_realtime end)   AS wind_obs_metric_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_realtime end) AS temp_f_obs_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_realtime end) AS wind_obs_imperial_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_historical end)   AS temp_c_hist_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_historical end)   AS wind_hist_metric_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_historical end) AS temp_f_hist_avg,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_historical end) AS wind_hist_imperial_avg,
+                              
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_realtime end)   AS temp_c_obs_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_realtime end)   AS wind_obs_metric_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_realtime end) AS temp_f_obs_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_realtime end) AS wind_obs_imperial_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_historical end)   AS temp_c_hist_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_historical end)   AS wind_hist_metric_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_historical end) AS temp_f_hist_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_historical end) AS wind_hist_imperial_min,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_realtime end)   AS temp_c_obs_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_realtime end)   AS wind_obs_metric_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_realtime end) AS temp_f_obs_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_realtime end) AS wind_obs_imperial_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_historical end)   AS temp_c_hist_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_historical end)   AS wind_hist_metric_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_historical end) AS temp_f_hist_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_historical end) AS wind_hist_imperial_max,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_historical end) as wind_direction_imperial_hist_avg ,
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_historical end) as wind_direction_metric_hist_avg, 
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_realtime end) as wind_direction_imperial_real_avg, 
+                              AVG(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_realtime end) as wind_direction_metric_real_avg, 
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_historical end) as wind_direction_imperial_hist_max ,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_historical end) as wind_direction_metric_hist_max, 
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_realtime end) as wind_direction_imperial_real_max, 
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_realtime end) as wind_direction_metric_real_max, 
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_historical end) as wind_direction_imperial_hist_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_historical end) as wind_direction_metric_hist_min, 
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_realtime end) as wind_direction_imperial_real_min, 
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_realtime end) as wind_direction_metric_real_min,
+                              Avg(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_forecast end)   AS temp_c_fcst_avg,
+                              Avg(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_forecast end)   AS wind_fcst_metric_avg,
+                              Avg(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_forecast end) AS temp_f_fcst_avg,
+                              Avg(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_forecast end) AS wind_fcst_imperial_avg,
+                              Avg(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_forecast end) as wind_direction_fcst_imprl_avg , 
+                              Avg(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_forecast end) as wind_direction_fcst_mtrc_avg , 
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_forecast end)   AS temp_c_fcst_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_forecast end)   AS wind_fcst_metric_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_forecast end) AS temp_f_fcst_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_forecast end) AS wind_fcst_imperial_max,
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_forecast end) as wind_direction_fcst_imprl_max , 
+                              Max(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_forecast end) as wind_direction_fcst_mtrc_max , 
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_metric_forecast end)   AS temp_c_fcst_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_metric_forecast end)   AS wind_fcst_metric_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN temp_imperial_forecast end) AS temp_f_fcst_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_imperial_forecast end) AS wind_fcst_imperial_min,
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_imperial_forecast end) as wind_direction_fcst_imprl_min , 
+                              Min(CASE WHEN record_hour_utc <  current_timestamp() THEN wind_direction_metric_forecast end) as wind_direction_fcst_mtrc_min , 
+
+                              MAX(field_status) AS field_status,
+                              MAX(device_health_status) AS device_health_status,
+                              1 AS is_forecast,
+                              AVG(data_quality_score) AS data_quality_score
+                            FROM quality_enriched
+                            WHERE DATE(record_hour_utc) = current_date and hour(record_hour_utc) > hour( current_timestamp())
+                            GROUP BY device_serial,
+                                  device_imei,
+                                  device_iccid,
+                                  device_type,
+                                  is_pivot_link,
+                                  health_status_6hr_window,
+                                  gps_latitude_degrees,
+                                  gps_longitude_degrees,
+                                  gps_altitude_meters,
+                                  record_hour_utc,
+                                  irrigation_event_type,
+                                  pumping_status,
+                                  dominating_pumping_status,field_status,
+                                  device_health_status
+
+                  - name: pre_final
+                    sql: |
+                        SELECT * FROM hourly_rollup_insights
+                         UNION ALL
+                        SELECT * FROM today_observed_insights
+                         UNION ALL
+                        SELECT * FROM today_total_insights
+                         ORDER BY observed_time DESC
+
+                  - name: hawk_insights_ready
+                    sql: |
+                        select  
+                          device_serial,
+                          device_imei,
+                            device_iccid,
+                            device_type,
+                            is_pivot_link,
+                            health_status_6hr_window,
+                            gps_latitude_degrees,
+                            gps_longitude_degrees,
+                            gps_altitude_meters,
+                            record_hour_utc,
+                            irrigation_event_type,      
+                            Max(rain_avg) as rain_avg,
+                            max(rain_max) as rain_max,
+                            Max(rain_min) as rain_min,
+                            Max(irrigation_depth_MAX) irrigation_depth_MAX,
+                            Max(irrigation_depth_Min)  irrigation_depth_Min,
+                            Max(irrigation_depth_AVG)  irrigation_depth_AVG,
+                            Max(angular_position_avg)  angular_position_avg,
+
+                            Max(angular_position_max)  angular_position_max,
+                            Max(angular_position_min)  angular_position_min, 
+                            pumping_status,
+                            dominating_pumping_status,
+                            observed_time,
+                            Max(pressure_psi_avg) as pressure_psi_avg,
+                            Max( pressure_psi_max) as pressure_psi_max,
+                            Max( pressure_psi_min) as pressure_psi_min,
+                            Max( pressure_kpa_avg) as pressure_kpa_avg,
+                            Max( pressure_kpa_max) as pressure_kpa_max,
+                            Max( pressure_kpa_min) as pressure_kpa_min,
+                            Max( temp_c_obs_avg) as temp_c_obs_avg,
+                            Max( wind_obs_metric_avg) as wind_obs_metric_avg,
+                            Max( temp_f_obs_avg) as temp_f_obs_avg,
+                            Max( wind_obs_imperial_avg) as wind_obs_imperial_avg,
+                            Max( temp_c_hist_avg) as temp_c_hist_avg,
+                            Max( wind_hist_metric_avg) as wind_hist_metric_avg,
+                            Max( temp_f_hist_avg) as temp_f_hist_avg,
+                            Max( wind_hist_imperial_avg) as wind_hist_imperial_avg,
+                            Max( temp_c_obs_min) as temp_c_obs_min,
+                            Max( wind_obs_metric_min) as wind_obs_metric_min,
+                            Max( temp_f_obs_min) as temp_f_obs_min,
+                            Max( wind_obs_imperial_min) as wind_obs_imperial_min,
+                            Max( temp_c_hist_min) as temp_c_hist_min,
+                            Max( wind_hist_metric_min) as wind_hist_metric_min,
+                            Max( temp_f_hist_min) as temp_f_hist_min,
+                            Max( wind_hist_imperial_min) as wind_hist_imperial_min,
+                            Max( temp_c_obs_max) as temp_c_obs_max,
+                            Max( wind_obs_metric_max) as wind_obs_metric_max,
+                            Max( temp_f_obs_max) as temp_f_obs_max,
+                            Max( wind_obs_imperial_max) as wind_obs_imperial_max,
+                            Max( temp_c_hist_max) as temp_c_hist_max,
+                            Max( wind_hist_metric_max) as wind_hist_metric_max,
+                            Max( temp_f_hist_max) as temp_f_hist_max,
+                            Max( wind_hist_imperial_max) as wind_hist_imperial_max,
+                            Max( wind_direction_imperial_hist_avg) as wind_direction_imperial_hist_avg ,
+                            Max( wind_direction_metric_hist_avg) as wind_direction_metric_hist_avg ,
+                            Max( wind_direction_imperial_real_avg) as wind_direction_imperial_real_avg ,
+                            Max( wind_direction_metric_real_avg) as wind_direction_metric_real_avg ,
+                            Max( wind_direction_imperial_hist_max) as wind_direction_imperial_hist_max ,
+                            Max( wind_direction_metric_hist_max) as wind_direction_metric_hist_max ,
+                            Max( wind_direction_imperial_real_max) as wind_direction_imperial_real_max ,
+                            Max( wind_direction_metric_real_max) as wind_direction_metric_real_max ,
+                            Max( wind_direction_imperial_hist_min) as wind_direction_imperial_hist_min,
+                            Max( wind_direction_metric_hist_min) as wind_direction_metric_hist_min ,
+                            Max( wind_direction_imperial_real_min) as wind_direction_imperial_real_min ,
+                            Max( wind_direction_metric_real_min) as wind_direction_metric_real_min,
+                            Max( temp_c_fcst_avg) as temp_c_fcst_avg,
+                            Max( wind_fcst_metric_avg) as wind_fcst_metric_avg,
+                            Max( temp_f_fcst_avg) as temp_f_fcst_avg,
+                            Max( wind_fcst_imperial_avg) as wind_fcst_imperial_avg,
+                            Max( wind_direction_fcst_imprl_avg) as wind_direction_fcst_imprl_avg , 
+                            Max( wind_direction_fcst_mtrc_avg) as wind_direction_fcst_mtrc_avg , 
+                            Max( temp_c_fcst_max) as temp_c_fcst_max,
+                            Max( wind_fcst_metric_max) as wind_fcst_metric_max,
+                            Max( temp_f_fcst_max) as temp_f_fcst_max,
+                            Max( wind_fcst_imperial_max) as wind_fcst_imperial_max,
+                            Max( wind_direction_fcst_imprl_max) as wind_direction_fcst_imprl_max , 
+                            Max( wind_direction_fcst_mtrc_max) as wind_direction_fcst_mtrc_max , 
+                            Max( temp_c_fcst_min) as temp_c_fcst_min,
+                            Max( wind_fcst_metric_min) as wind_fcst_metric_min,
+                            Max( temp_f_fcst_min) as temp_f_fcst_min,
+                            Max( wind_fcst_imperial_min) as wind_fcst_imperial_min,
+                            Max( wind_direction_fcst_imprl_min) as wind_direction_fcst_imprl_min , 
+                            Max( wind_direction_fcst_mtrc_min) as wind_direction_fcst_mtrc_min , 
+
+                            MAX(field_status)  field_status,
+                            MAX(device_health_status)  device_health_status,
+                            is_forecast,
+                            Max(data_quality_score)  data_quality_score
+                        FROM pre_final
+                        GROUP BY device_serial,
+                              device_imei,
+                              device_iccid,
+                              device_type,
+                              is_pivot_link,
+                              health_status_6hr_window,
+                              gps_latitude_degrees,
+                              gps_longitude_degrees,
+                              gps_altitude_meters,
+                              record_hour_utc,observed_time,
+                              irrigation_event_type,
+                              pumping_status,
+                              dominating_pumping_status,is_forecast 

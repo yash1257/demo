@@ -1,0 +1,64 @@
+name: hawk-device-enriched
+version: v1beta
+type: data
+entity: product
+description: This data product centralizes the collection, processing, and enrichment of Hawk device data to ensure consistent, high-quality information for downstream use. It enables reliable, timely, and accurate insights that support data-driven decision-making, operational optimization, and predictive analytics across business functions. The product is designed for seamless integration with analytics and monitoring platforms, ensuring actionable intelligence and enhanced operational efficiency.
+tags:
+  - DPDomain.Water Management
+  - DPUsecase.Hawk IoT Device
+  - DPTier.Consumer Aligned
+purpose: To provide a centralized, enriched Hawk device dataset that supports analytics, reporting, and downstream data consumers with reliable, high-quality information for enhanced operational and strategic decision-making.
+v1beta:
+  data:
+    meta:
+      title: Insights from Hawk Device        # Display name for the product                                         
+      sourceCodeUrl: https://bitbucket.org/tmdc/arable/src/main/poc/data-products/consumer-aligned-dp/hawk-device-telemetry       # Update this to your actual repo path if structure changes
+      trackerUrl: https://rubikai.atlassian.net/browse/DPRB-252
+    collaborators:                           # Roles & contributors  
+      - name: sanduvenkatasujatha
+        description: developer
+      - name: yashrathore
+        description: developer
+      - name: manishagrawal
+        description: owner
+      - name: yogendraraghuvanshi
+        description: collaborator
+    resource:  
+      refType: dataos # mandatory
+      ref: bundle:v1beta:hawk-enriched-bundle       # Change 'hawk-enriched-bundle' if you have a different bundle name
+      description: A Bundle orchestrates and streamlines data ingestion, quality validation, and processing, ensuring an efficient, reliable, and consistent flow of data across the platform.
+
+    inputs:
+      - refType: dataos
+        ref: dataos://arablehub:hawk/hawk_telemetry         # Update path if raw dataset name or structure changes
+          
+      - refType: dataos
+        ref: dataos://lakehouse:weather/realtime_imperial  # Update path if real-time weather dataset name or structure changes
+ 
+      - refType: dataos
+        ref: dataos://lakehouse:weather/realtime_metric    # Update path if real-time weather dataset name or structure changes
+ 
+      - refType: dataos
+        ref: dataos://lakehouse:weather/historical_imperial   # Update path if historical dataset name or structure changes                                                                                                 
+ 
+      - refType: dataos
+        ref: dataos://lakehouse:weather/historical_metric     # Update path if historical dataset name or structure changes
+ 
+      - refType: dataos
+        ref: dataos://lakehouse:weather/forecast__imperial    # Update path if forecast dataset name or structure changes
+ 
+      - refType: dataos
+        ref: dataos://lakehouse:weather/forecast__metric      # Update path if forecast dataset name or structure changes
+ 
+    outputs:
+      - refType: dataos
+        ref: dataset:lakehouse:hawk:hawk_telemetry_enriched   # Update path if enriched dataset name or structure changes
+
+    ports:
+      lens:
+        ref: lens:v1alpha:hawk-telemetry-minerva:arable     # Update 'hawk-telemetry-minerva:arable' if you have a different lens name 
+        refType: dataos
+
+
+   
+

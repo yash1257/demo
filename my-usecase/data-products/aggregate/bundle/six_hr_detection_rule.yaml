@@ -1,0 +1,158 @@
+---
+version: v1
+name: hawk-failure-detection-6hr
+type: workflow
+tags:
+  - hawk failuer detection data
+  - arable hawk
+  - hawk sensor health
+description: This workflow creates hawk failure detection data from hawk enriched dataset.
+workspace: ${WORKSPACENAME}              # Replace with your workspace
+workflow:
+  title: hawk_health_scheduled
+  # schedule: 
+  #   cron: '*/15 * * * *'                 # schedule every 15 minutes
+  #   concurrencyPolicy: Allow
+  #   timezone: Asia/Kolkata
+  dag:
+    - name: dg-hawk-failure
+      title: Hawk Failure Detection 6hr window
+      description: This dag ingests from hawk telemetry data and creates failure data in 6hr window.
+      spec:
+        tags:
+          - hawk failure detection data
+          - arable hawk
+        stack: flare:7.0
+        compute: ${COMPUTENAME}           # Replace with your compute name
+        stackSpec:
+          driver:
+            coreLimit: 2000m
+            cores: 1
+            memory: 1000m
+          executor:
+            coreLimit: 2000m
+            cores: 1
+            instances: 1
+            memory: 2000m
+          job:
+            explain: true
+            inputs:
+              - name: hawk_telemetry
+                dataset: dataos://arablehub:hawk/hawk_telemetry?acl=rw    # Change dataset path if the table is stored elsewhere
+                options:
+                  driver: org.postgresql.Driver
+            logLevel: INFO
+            outputs:
+              - name: final_ok
+                dataset: dataos://lakehouse:hawk_data/hawk_sensor_health?acl=rw
+                format: Iceberg
+                description: Ingest Hawk Failure Detection Data in 6 hr window
+                title: Hawk Failure Detection Data
+                options:
+                  saveMode: overwrite                   # Overwrites data change to append if needed
+                  sort:
+                    mode: partition
+                    columns:
+                      - name: record_date_utc
+                        order: asc
+                  iceberg:
+                    properties:
+                      write.format.default: parquet
+                      write.metadata.compression-codec: gzip
+                    partitionSpec:
+                      - type: day
+                        column: record_date_utc
+                        name: day
+              - name: final
+                dataset: dataos://lakehouse:hawk_data/hawk_sensor_good_health?acl=rw
+                format: Iceberg
+                description: Ingest Hawk Failure Detection Data in 6 hr window
+                title: Hawk Failure Detection Data
+                options:
+                  saveMode: overwrite
+                  sort:
+                    mode: partition
+                    columns:
+                      - name: record_date_utc
+                        order: asc
+                  iceberg:
+                    properties:
+                      write.format.default: parquet
+                      write.metadata.compression-codec: gzip
+                    partitionSpec:
+                      - type: day
+                        column: record_date_utc
+                        name: day  
+            steps:
+              - sequence:
+                  - name: base
+                    sql: |
+                      SELECT
+                        device_serial,
+                        record_date_utc,
+                        pressure_psi,
+                        COUNT(*) OVER w AS cnt,
+                        MAX(pressure_psi) OVER w - MIN(pressure_psi) OVER w AS range_pressure_psi,
+                        STDDEV_POP(pressure_psi) OVER w AS std_pressure_psi,
+                        SUM(CASE WHEN pressure_psi < -15 THEN 1 ELSE 0 END) OVER w AS cnt_lt_neg15,
+                        SUM(CASE WHEN pressure_psi BETWEEN -15 AND -2 THEN 1 ELSE 0 END) OVER w AS cnt_neg,
+                        SUM(CASE WHEN pressure_psi < -2 THEN 1 ELSE 0 END) OVER w AS cnt_low_spikes,
+                        SUM(CASE WHEN pressure_psi > 100 THEN 1 ELSE 0 END) OVER w AS cnt_high
+                      FROM hawk_telemetry
+                      WINDOW w AS (
+                        PARTITION BY device_serial
+                        ORDER BY record_date_utc
+                        RANGE BETWEEN INTERVAL 6 HOURS PRECEDING AND CURRENT ROW )
+
+                  - name: percentages
+                    sql: |
+                      SELECT
+                        device_serial,
+                        record_date_utc,
+                        cnt,
+                        range_pressure_psi,
+                        std_pressure_psi,
+                        100.0 * cnt_lt_neg15 / cnt AS pct_lt_neg15,
+                        100.0 * cnt_neg / cnt AS pct_neg,
+                        100.0 * cnt_low_spikes / cnt AS pct_low_spikes,
+                        100.0 * cnt_high / cnt AS pct_high
+                      FROM base
+                  - name: failuer_status
+                    sql: |
+                      SELECT
+                        device_serial,
+                        record_date_utc,
+                        cnt,
+                        range_pressure_psi,
+                        std_pressure_psi,
+                        pct_lt_neg15,
+                        pct_neg,
+                        pct_low_spikes,
+                        pct_high,
+                        CASE
+                          WHEN cnt < 60 THEN 'Reduced Sample Rate'
+                          WHEN pct_lt_neg15 >= 10 THEN 'Fault_0V (Sensor Disconnected)'
+                          WHEN pct_neg >= 10 THEN 'Fault_Negative_Pressure'
+                          WHEN pct_low_spikes >= 10 THEN 'Low Spikes (Intermittent)'
+                          WHEN pct_high >= 10 THEN 'Hard-High Lock'
+                          WHEN std_pressure_psi > 20 AND range_pressure_psi > 60 THEN 'High Noise / Drift'
+                          WHEN range_pressure_psi BETWEEN 0 AND 60 THEN 'OK'
+                          ELSE 'Unknown'
+                        END AS health_status_6hr_window
+                      FROM percentages;
+                  - name: final_ok
+                    sql: |
+                      SELECT distinct 
+                        hawk_telemetry.*,
+                        failuer_status.health_status_6hr_window
+                      FROM failuer_status
+                        left join hawk_telemetry on failuer_status.device_serial = hawk_telemetry.device_serial and failuer_status.record_date_utc = hawk_telemetry.record_date_utc
+                        
+                  - name: final
+                    sql: |
+                      SELECT distinct 
+                        hawk_telemetry.*,
+                        failuer_status.health_status_6hr_window
+                      FROM failuer_status
+                        left join hawk_telemetry on failuer_status.device_serial = hawk_telemetry.device_serial and failuer_status.record_date_utc = hawk_telemetry.record_date_utc
+                        where failuer_status.health_status_6hr_window = 'OK'

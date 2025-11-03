@@ -1,0 +1,22 @@
+version: v1
+name: hawk-sensor-device-health
+type: workflow
+description: Scan the hawk sensor data product schema and register it into Metis.
+workspace: ${WORKSPACENAME}             # Replace with your workspace name
+workflow:
+  dag:
+    - name: hawk-sensor-scanner
+      description: Scan the schema of the hawk sensor data product and register it into Metis.
+      spec:
+        stack: scanner:2.0
+        compute: ${COMPUTENAME}         # Replace with compute name
+        runAsUser: metis
+        stackSpec:
+          type: data-product
+          sourceConfig:
+            config:
+              type: DataProduct
+              markDeletedDataProducts: true
+              dataProductFilterPattern:
+                includes:
+                  - hawk-sensor-device-health       # workflow name of the data product to scan

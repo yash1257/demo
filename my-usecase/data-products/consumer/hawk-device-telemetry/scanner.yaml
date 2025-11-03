@@ -1,0 +1,22 @@
+version: v1
+name: hawk-telemetry-enriched-scanner
+type: workflow
+description: The task involves scanning the schema from the enriched data product and registering the data into Metis.
+workspace: ${WORKSPACENAME}      # Replace with your workspace name
+workflow:
+  dag:
+    - name: data-product-scanner
+      description: The task involves scanning the schema from the data product and registering the data into Metis.
+      spec:
+        stack: scanner:2.0
+        compute: ${COMPUTENAME}   # Replace with your compute name  
+        runAsUser: metis
+        stackSpec:
+          type: data-product
+          sourceConfig:
+            config:
+              type: DataProduct
+              markDeletedDataProducts: true
+              dataProductFilterPattern:
+                includes:
+                  - hawk-device-enriched     # workflow name of the data product to scan
