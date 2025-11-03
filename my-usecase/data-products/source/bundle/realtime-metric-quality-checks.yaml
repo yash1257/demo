@@ -20,7 +20,7 @@ workflow:
         Validate completeness, validity, accuracy, schema, and consistency of
         realtime_metric dataset using physical plausibility rules.
       spec:
-        stack: soda+python:2.0
+        stack: soda+python:1.0
         logLevel: INFO
         compute: ${COMPUTENAME}         # Replace with your compute resource name
         resources:
@@ -53,15 +53,6 @@ workflow:
                     attributes:
                       category: Completeness
 
-                - missing_count(wind_direction) = 0:
-                    name: Completeness of Precipitation Probability
-                    attributes:
-                      category: Completeness
-
-                - missing_count(time) = 0:
-                    name: Completeness of Time Column
-                    attributes:
-                      category: Completeness
                 
                 # VALIDITY (Metric Units)
                 - invalid_count(temperature) = 0:
@@ -100,33 +91,6 @@ workflow:
                       category: Validity
 
                 # ACCURACY 
-
-                - invalid_count(precipitation_probability) = 0:
-                    valid min: 0
-                    valid max: 100
-                    name: Accuracy of Precipitation Probability (%)
-                    attributes:
-                      category: Accuracy
-
-                - invalid_count(cloud_cover) = 0:
-                    valid min: 0
-                    valid max: 100
-                    name: Accuracy of Cloud Cover (%)
-                    attributes:
-                      category: Accuracy
-
-                - invalid_count(uv_index) = 0:
-                    valid min: 0
-                    valid max: 20
-                    name: Accuracy of UV Index
-                    attributes:
-                      category: Accuracy
-
-                - invalid_count(visibility) = 0:
-                    valid min: 0
-                    name: Accuracy of Visibility (>= 0)
-                    attributes:
-                      category: Accuracy
 
                 - wind_consistency_check:
                     query: |

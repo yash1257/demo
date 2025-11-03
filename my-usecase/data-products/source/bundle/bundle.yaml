@@ -1,4 +1,4 @@
-name: realtime-weather-bundle
+name: realtime-bundle
 version: v1beta
 type: bundle
 tags:
@@ -10,11 +10,11 @@ layer: "user"
 bundle:
   resources:
     - id: realtime-imperical-quality-imperial
-      file: data-products/source/bundle/realtime-imperical-quality-checks.yaml   # Path to quality imperical YAML file
+      file: my-usecase/data-products/source/bundle/realtime-imperical-quality-checks.yaml  # Path to quality imperical YAML file
 
 
     - id: realtime-metrics-quality-metric
-      file: data-products/source/bundle/realtime-metric-quality-checks.yaml     # Path to quality metric YAML file
+      file: my-usecase/data-products/source/bundle/realtime-metric-quality-checks.yaml   # Path to quality metric YAML file
       # dependencyConditions:
       #   - resourceId: realtime-imperical-quality-metric
       #     status:

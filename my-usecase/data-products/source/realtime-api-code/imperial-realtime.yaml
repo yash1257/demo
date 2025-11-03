@@ -1,4 +1,4 @@
-name: realtime-imperial-new
+name: realtime-imperial-yash
 version: v1
 type: workflow
 tags:
@@ -14,7 +14,7 @@ workflow:
     - name: realtime-imperial-dag
       spec:
         stack: nilus:1.0
-        compute: runnable-default       # Change to your compute environment name
+        compute: ${COMPUTENAME}       # Change to your compute environment name
         resources:
           requests:
             cpu: 500m
@@ -24,15 +24,16 @@ workflow:
           - name: weather-api-cred       # Replace with the secret name created for the Weather API
             allKeys: true
             consumptionType: envVars
-          - name: ${COMPUTENAME}     # Replace with Git credentials secret name
+          - name: ${GITSECRETNAME}     # Replace with Git credentials secret name
             allKeys: true
             consumptionType: envVars
         stackSpec:
           repo:
+
             url: "https://github.com/yash1257/demo"      # Replace with your repository URL if different
             syncFlags:
               - '--ref=main' 
-            baseDir: "demo/demo-data-products/source/realtime-api-code"    # Directory path inside the repo where your code resides
+            baseDir: "demo/my-usecase/data-products/source/realtime-api-code"    # Directory path inside the repo where your code resides
                                                                               # Change this if your code structure or folder path changes
           source: 
             address: "custom://WeatherRealtimeApiSource?url=https://api.tomorrow.io/v4/weather/realtime?location=12.9155151,77.6158726&units=imperial&apikey={API_KEY}"
@@ -42,4 +43,4 @@ workflow:
             address: dataos://lakehouse?acl=rw        # Destination (Lakehouse)
             options:
               dest-table: "nilus"
-              incremental-strategy: append           # Schema name in Lakehouse
+              incremental-strategy: append         

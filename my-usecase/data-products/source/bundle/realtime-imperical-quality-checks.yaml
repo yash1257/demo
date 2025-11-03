@@ -20,7 +20,7 @@ workflow:
         Validate completeness, validity, accuracy, schema, and consistency of
         realtime_imperial dataset using physical plausibility rules.
       spec:
-        stack: soda+python:2.0
+        stack: soda+python:1.0
         logLevel: INFO
         compute: ${COMPUTENAME}     # Replace with your compute resource name
         resources:
@@ -52,11 +52,8 @@ workflow:
                 - missing_count(humidity) = 0:
                     name: Completeness of Humidity
                     attributes:
-                      category: Completeness
-
-                
+                      category: Completeness 
                 # VALIDITY 
-
                 - invalid_count(temperature) = 0:
                     valid min: -60
                     valid max: 110
@@ -69,10 +66,8 @@ workflow:
                     valid max: 100
                     name: Validity of Humidity (%)
                     attributes:
-                      category: Validity
-                
+                      category: Validity 
                 # ACCURACY / CONSISTENCY
-
                 - non_negative_precipitation:
                     query: |
                       SELECT COUNT(*) as invalid_records
@@ -85,15 +80,12 @@ workflow:
                     attributes:
                       category: Accuracy
 
-                
                 # FRESHNESS
-                
                 - freshness(load_datetime) < 1h:
                     name: Realtime Load Freshness (< 1 hour)
                     attributes:
                       category: Freshness
-
-                
+   
                 # --- Schema Checks ---
                 - schema:
                     name: Confirm required weather columns are present

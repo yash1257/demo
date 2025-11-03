@@ -19,4 +19,4 @@ workflow:
               markDeletedDataProducts: true
               dataProductFilterPattern:
                 includes:
-                  - weather-realtime      # workflow name of the data product to scan
+                  - weather-realtime-product-yash      # workflow name of the data product to scan

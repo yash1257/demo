@@ -32,7 +32,7 @@ workflow:
             url: "https://github.com/yash1257/demo"      # Replace with your repository URL if different
             syncFlags:
               - '--ref=main' 
-            baseDir: "demo/demo-data-products/source/realtime-api-code"    # Directory path inside the repo where your code resides
+            baseDir: "demo/my-usecase/data-products/source/realtime-api-code"    # Directory path inside the repo where your code resides
                                                                               # Change this if your code structure or folder path changes
           source:
             address: "custom://WeatherRealtimeApiSource?url=https://api.tomorrow.io/v4/weather/realtime?location=12.9155151,77.6158726&units=metric&apikey={API_KEY}"
@@ -41,5 +41,5 @@ workflow:
           sink:
             address: dataos://lakehouse?acl=rw          # Destination (Lakehouse)
             options:
-              dest-table: "nilus"                    # Schema name in Lakehouse
+              dest-table: "nilus"                    # Schema name 
               incremental-strategy: append  
